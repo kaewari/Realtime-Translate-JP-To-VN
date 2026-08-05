@@ -1,0 +1,1 @@
+"""FastAPI + WebSocket entrypoint (scaffold)."""
