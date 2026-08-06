@@ -1,6 +1,6 @@
 # Plan: Realtime dịch Nhật sang tiếng Việt
 
-> **Cập nhật 2026-08-06** — scaffold structure theo tree YouTube JP Caption Studio: backend = `local-bridge/` (thay `app/backend`), UI sẽ đặt dưới `web/` (TBD). Chi tiết tree ở section "Cấu trúc thư mục" bên dưới.
+> **Cập nhật 2026-08-06 (tối)** — Verifying review claim trên máy thật: 7/7 unit tests pass; whisper-small ASR chạy thật (こんにちは → đúng, MPS ~5.8s, CPU ~8.2s); MarianMT opus-mt-ja-vi chạy thật (今日はとてもいい天気ですね → Hôm nay là một ngày đẹp trời.); dict fast-path ~0.00s; E2E WebSocket với audio thật ra `こんにちは。→ Xin chào.`. Đã fix scipy pin (xem dưới) và fix contract `is_final` (server finalize + client flush/dedupe). Phase 1-3 (MVP) hoàn thành; Phase 4 (whisper.cpp/MLX) là việc tương lai.
 
 ## Cấu hình máy (đã kiểm tra 2026-08-05)
 - Máy: MacBook Pro – Chip Apple M5 Pro (15 core CPU)
@@ -9,6 +9,11 @@
 - Hệ điều hành: macOS 27.0
 - Python: 3.10.6 (đã cài, khuyên dùng venv riêng cho dự án)
 - ffmpeg: 8.1.2 (đã cài qua Homebrew tại /opt/homebrew/bin/ffmpeg)
+
+### ⚠️ Pin bắt buộc (2026-08-06): `scipy==1.14.1`
+- Wheel `scipy>=1.15` cho cp310 fail khi dlopen trên macOS 27: dyld từ chối `__DATA/__thread_bss` zero-fill section (offset ≠ 0) trong `_spropack` — hậu quả là `from transformers import pipeline` crash → ASR tự fallback về mock.
+- `import scipy` standalone vẫn OK, chỉ crash khi transformers kéo `scipy.sparse.linalg` → `_svdp` → `_spropack`.
+- Đã pin trong `local-bridge/requirements.txt`; khi nâng Python lên bản mới hơn (3.11+/Homebrew) có thể bỏ pin và kiểm tra lại.
 
 ### Hệ quả cho plan
 - **Không dùng được CUDA** → các lựa chọn tăng tốc là: Apple Metal (MPS), CoreML, hoặc CPU + quantization (int8).
@@ -67,38 +72,37 @@
 - Có thể dùng React/Next.js hoặc plain HTML/JS
 
 ## Đề xuất stack (cho máy hiện tại)
-- Backend: Python + FastAPI + WebSocket
-- ASR: whisper.cpp (Metal) hoặc mlx-whisper – ưu tiên cho Apple Silicon
-- Translation: Hugging Face Transformers (`opus-mt-ja-vi` trước, nâng cấp M2M100/NLLB sau) + MPS
-- Audio: sounddevice (thu micro), ffmpeg (đã cài – xử lý/convert audio)
-- Frontend: React hoặc Next.js (có thể bắt đầu bằng HTML/JS đơn giản)
-- Môi trường: Python venv riêng (Python 3.10.6 đã có sẵn)
+- Backend: Python + FastAPI + WebSocket ✅ (đã làm: `local-bridge/`)
+- ASR: **đã làm MVP** = transformers whisper-small trên MPS (`asr_device=mps` mặc định, fallback cpu); **Phase 4** = whisper.cpp (Metal) / mlx-whisper để giảm latency
+- Translation: Hugging Face Transformers `opus-mt-ja-vi` (MarianMT, lazy-load) + seed dict fast-path trước ✅ (nâng cấp M2M100/NLLB sau nếu cần)
+- Audio: thu mic trên **web UI** (Web Audio API → PCM16 base64 qua WS) — không dùng sounddevice; ffmpeg chỉ cho fixture test
+- Frontend: plain HTML/JS ✅ (`web/index.html`, dark glassmorphism)
+- Môi trường: Python 3.10.6 + `scipy==1.14.1` (xem pin ở trên)
 - Deployment: local desktop first, sau đó Docker hoặc cloud
 
 ## Kế hoạch triển khai
 
-### Phase 1 – PoC nhanh (3–5 ngày)
-- Tạo `local-bridge/` (backend Python: FastAPI + WebSocket) nhận micro input
-- Chạy Whisper trên audio chunk ngắn
-- In ra text tiếng Nhật và bản dịch tiếng Việt
-- Không cần tối ưu quá nhiều về độ trễ
+### Phase 1 – PoC nhanh (3–5 ngày) ✅ DONE 2026-08-06
+- `local-bridge/` (FastAPI + WebSocket) nhận micro input qua WS audio_chunk ✅
+- Whisper trên audio chunk ngắn ✅ (whisper-small, lazy-load, MPS)
+- In text tiếng Nhật + bản dịch tiếng Việt ✅
 
-### Phase 2 – Near real-time (5–7 ngày)
-- Tối ưu chunking và buffering
-- Dùng VAD để loại khoảng lặng
-- Giảm độ trễ bằng cách xử lý từng chunk thay vì toàn bộ file
-- Cải thiện logic gộp câu
+### Phase 2 – Near real-time (5–7 ngày) ✅ DONE 2026-08-06
+- Chunking/buffering: AudioBufferManager sliding window (3s max / 0.5s min, step 1.5s) ✅
+- VAD energy (RMS threshold 0.015) loại khoảng lặng ✅
+- Xử lý từng chunk thay vì toàn bộ file ✅
+- **Ghi chú hạn chế streaming**: chunk giữa câu có thể bị whisper hallucinate (vd `コンニング`); chấp nhận cho MVP — câu cuối được finalize đúng qua `is_final` (fix 2026-08-06: server gửi lại partial cuối kèm `is_final=true` khi flush rỗng; UI gửi `is_final` khi stop và replace card cuối thay vì duplicate)
 
-### Phase 3 – UI và trải nghiệm người dùng (3–4 ngày)
-- Tạo giao diện web hiển thị text và bản dịch
-- Thêm nút start/stop, clear transcript, copy text
-- Hiển thị timestamp cho từng câu
+### Phase 3 – UI và trải nghiệm người dùng (3–4 ngày) ✅ DONE 2026-08-06
+- Web UI dark glassmorphism: nút start/stop, JA/VI transcript panels, audio meter, latency tag ✅
+- Clear transcript ✅; **chưa có copy text** (trong review ghi là có — thực tế chưa có nút copy; xem open gaps wiki)
+- Timestamp từng câu ✅
 
-### Phase 4 – Tối ưu hiệu năng (1–2 tuần)
-- Tận dụng Metal: dùng whisper.cpp với backend Metal hoặc MLX (không dùng CUDA trên Mac)
-- Dùng quantization/int8 để giảm RAM/CPU khi cần
-- Cân nhắc ONNX Runtime (CoreML/CPU) nếu cần chạy gọn hơn
-- Nếu cần, dùng model nhỏ hơn để đổi lại giữa tốc độ và độ chính xác
+### Phase 4 – Tối ưu hiệu năng (1–2 tuần) 🔜 FUTURE
+- whisper.cpp (Metal) hoặc mlx-whisper thay transformers (hiện MPS ~5.8s/window — realtime vẫn "near" chứ chưa đạt streaming mượt)
+- Quantization/int8 giảm RAM/CPU khi cần
+- ONNX Runtime (CoreML/CPU) nếu cần gọn hơn
+- Đo latency lại sau khi đổi engine; cân nhắc model nhỏ hơn (base/tiny) cho chunk ngắn
 
 ## Mốc thành công MVP
 - Có thể thu âm giọng nói tiếng Nhật từ micro
@@ -128,7 +132,7 @@
 - wiki/                   # LLM wiki (Karpathy): index.md, log.md, topics/, upstream/
 - plan/ review/           # plan/review file (bất biến; wiki = tổng hợp sống)
 
-Ghi chú: models ASR/MT sẽ ở `local-bridge/data/models/` (bootstrap download, gitignored — chưa tạo dir cho tới khi bootstrap cần).
+Ghi chú (2026-08-06, theo thực tế): models ASR/MT nằm ở **HF cache** `~/.cache/huggingface/hub/` (transformers lazy-load lần dùng đầu, không có endpoint `/bootstrap`). `local-bridge/data/models/` chưa dùng — chỉ cần dir đó nếu chuyển sang whisper.cpp/MLX (Phase 4).
 
 ## Khuyến nghị triển khai ban đầu
 - Bắt đầu bằng mô hình ASR: whisper.cpp (Metal) hoặc mlx-whisper – tối ưu cho Mac M5 Pro

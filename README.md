@@ -2,7 +2,7 @@
 
 Dịch giọng nói **tiếng Nhật → tiếng Việt** theo thời gian thực (near real-time), local-first, tối ưu cho Apple Silicon.
 
-> **Trạng thái: scaffold** (2026-08-06) — chỉ có cấu trúc thư mục + AGENTS/skills/wiki. Chưa có code hoạt động.
+> **Trạng thái: MVP Ready + verified** (2026-08-06) — Backend local-bridge (FastAPI + WebSocket + VAD + ASR + MarianMT) & Web Studio UI đã hoàn thiện; review claims đã verify trên máy thật (ASR whisper-small, MT MarianMT, E2E WS với audio thật).
 
 ## Giới thiệu
 
@@ -24,10 +24,11 @@ Thu âm từ micro, nhận diện giọng nói tiếng Nhật bằng ASR cục b
 ## Stack
 
 - Backend: **Python + FastAPI + WebSocket** (`local-bridge/`, port 8765)
-- ASR: **whisper.cpp (Metal)** hoặc **mlx-whisper** — model `small`/`medium`, `language: ja`
-- Translation: **Helsinki-NLP/opus-mt-ja-vi** (MarianMT, MPS) → nâng cấp M2M100/NLLB sau
-- Audio: **sounddevice** (thu micro) + ffmpeg (xử lý/convert)
-- UI: web (MVP: HTML/JS đơn giản, sau có thể Next.js) — sẽ đặt dưới `web/` (TBD)
+- VAD: **RMS Energy VAD** (`app/services/vad_service.py`)
+- ASR: **Whisper / Fallback ASR** (`app/services/asr_service.py`) — `language: ja`
+- Translation: **Helsinki-NLP/opus-mt-ja-vi** (MarianMT + Offline Dict Fallback)
+- Audio Buffer: **Streaming PCM16 Base64 Buffer Manager** (`app/services/audio_buffer.py`)
+- UI: Web Studio (`web/index.html` - HTML5, CSS Glassmorphism, Web Audio API)
 
 ## Cấu trúc thư mục
 
@@ -49,21 +50,20 @@ plan/ review/       # plan/review file (bất biến, wiki là tổng hợp số
 
 ## Quickstart
 
-> ⏳ TODO — điền khi backend MVP chạy được (Phase 1).
-
 1. `cd local-bridge && python3.10 -m venv .venv && source .venv/bin/activate`
-2. `pip install -r requirements.txt` *(chưa có)*
+2. `pip install -r requirements.txt` — ⚠️ bắt buộc `scipy==1.14.1` (đã pin): wheel scipy≥1.15 fail dyld trên macOS 27 với Python 3.10 → ASR âm thầm fallback mock
 3. `uvicorn app.main:app --port 8765`
-4. POST `/bootstrap` → chờ download model → mở UI...
+4. Mở <http://localhost:8765/> — lần dùng đầu models (whisper-small, opus-mt-ja-vi) tự download vào HF cache `~/.cache/huggingface/hub/`, gọi đầu ~10-30s (lazy-load), các gọi sau nhanh hơn
+5. (Tùy chọn) `curl localhost:8765/api/status` — xem engine ASR/MT đã load chưa
 
 ## Lộ trình
 
 | Phase | Nội dung | Trạng thái |
 |---|---|---|
-| 1 | PoC nhanh — thu micro → ASR → dịch → in text | pending |
-| 2 | Near real-time — VAD, chunking, sentence buffer | pending |
-| 3 | UI — start/stop, hiển thị JA + VI, timestamp | pending |
-| 4 | Tối ưu hiệu năng — Metal/quantization | pending |
+| 1 | PoC nhanh — thu micro → ASR → dịch → in text | ✅ done |
+| 2 | Near real-time — VAD, chunking, sentence buffer | ✅ done |
+| 3 | UI — start/stop, hiển thị JA + VI, timestamp | ✅ done (thiếu nút copy text) |
+| 4 | Tối ưu hiệu năng — Metal/quantization (whisper.cpp/MLX) | ⏳ future |
 
 Chi tiết: `plan/plan-2026-08-05-realtime-translate-jp-to-vn.md`.
 

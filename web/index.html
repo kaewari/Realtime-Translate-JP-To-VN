@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Realtime Translate JP → VN Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0a0c10;
+      --panel-bg: rgba(22, 27, 38, 0.75);
+      --panel-border: rgba(255, 255, 255, 0.08);
+      --accent-red: #ff4757;
+      --accent-red-glow: rgba(255, 71, 87, 0.25);
+      --accent-blue: #38ef7d;
+      --accent-cyan: #00d2ff;
+      --accent-purple: #7f53ac;
+      --text-main: #f1f5f9;
+      --text-sub: #94a3b8;
+      --card-jp: rgba(30, 41, 59, 0.5);
+      --card-vi: rgba(15, 23, 42, 0.8);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(circle at 20% 20%, rgba(127, 83, 172, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 80% 80%, rgba(0, 210, 255, 0.12) 0%, transparent 40%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      padding: 1.25rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--panel-border);
+      backdrop-filter: blur(12px);
+      background: rgba(10, 12, 16, 0.6);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #7f53ac, #647eee);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.1rem;
+      box-shadow: 0 4px 15px rgba(127, 83, 172, 0.4);
+    }
+
+    .brand-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #ffffff, #cbd5e1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 0.9rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--panel-border);
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #64748b;
+    }
+
+    .status-dot.connected {
+      background: #38ef7d;
+      box-shadow: 0 0 10px #38ef7d;
+    }
+
+    .status-dot.recording {
+      background: #ff4757;
+      box-shadow: 0 0 12px #ff4757;
+      animation: pulse 1.2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.3); opacity: 0.6; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    main {
+      flex: 1;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .controls-panel {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 18px;
+      padding: 1.5rem;
+      backdrop-filter: blur(16px);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .mic-controls {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .btn-mic {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.85rem 1.75rem;
+      border: none;
+      border-radius: 12px;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      background: linear-gradient(135deg, #00b09b, #96c93d);
+      color: #000;
+      box-shadow: 0 4px 15px rgba(0, 176, 155, 0.3);
+    }
+
+    .btn-mic.recording {
+      background: linear-gradient(135deg, #ff416c, #ff4b2b);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(255, 65, 108, 0.5);
+    }
+
+    .btn-mic:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.1);
+    }
+
+    .audio-meter {
+      width: 160px;
+      height: 10px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    .audio-level {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #00d2ff, #38ef7d);
+      border-radius: 5px;
+      transition: width 0.1s ease;
+    }
+
+    .text-input-box {
+      display: flex;
+      gap: 0.5rem;
+      flex: 1;
+      max-width: 450px;
+    }
+
+    .input-ja {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--panel-border);
+      border-radius: 10px;
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 0.9rem;
+      outline: none;
+    }
+
+    .input-ja:focus {
+      border-color: var(--accent-cyan);
+    }
+
+    .btn-action {
+      padding: 0.75rem 1.25rem;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--panel-border);
+      border-radius: 10px;
+      color: var(--text-main);
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-action:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .transcript-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      flex: 1;
+      min-height: 480px;
+    }
+
+    @media (max-width: 850px) {
+      .transcript-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel-box {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 18px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 1rem;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid var(--panel-border);
+    }
+
+    .panel-title {
+      font-size: 1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .flag-icon {
+      font-size: 1.2rem;
+    }
+
+    .transcript-scroll {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      padding-right: 0.5rem;
+      max-height: 520px;
+    }
+
+    .transcript-card {
+      background: var(--card-jp);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 1rem;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .transcript-card.vi {
+      background: var(--card-vi);
+      border-left: 3px solid var(--accent-cyan);
+    }
+
+    .card-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--text-sub);
+      margin-bottom: 0.4rem;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .card-text {
+      font-size: 1.05rem;
+      line-height: 1.5;
+      font-weight: 500;
+    }
+
+    .card-text.ja {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      color: #7dd3fc;
+    }
+
+    .card-text.vi {
+      color: #f1f5f9;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    footer {
+      padding: 1rem;
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-sub);
+      border-top: 1px solid var(--panel-border);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="brand-logo">JP</div>
+      <div class="brand-title">Realtime Translate JP → VN Studio</div>
+    </div>
+    <div class="status-badge">
+      <div id="statusDot" class="status-dot"></div>
+      <span id="statusText">Chưa kết nối</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="controls-panel">
+      <div class="mic-controls">
+        <button id="btnMic" class="btn-mic">
+          <span id="micIcon">🎙️</span>
+          <span id="micText">Bắt đầu thu âm</span>
+        </button>
+        <div class="audio-meter">
+          <div id="audioLevel" class="audio-level"></div>
+        </div>
+      </div>
+
+      <div class="text-input-box">
+        <input id="inputJa" type="text" class="input-ja" placeholder="Nhập câu tiếng Nhật để dịch thử..." />
+        <button id="btnTranslate" class="btn-action">Dịch</button>
+        <button id="btnClear" class="btn-action">Xóa</button>
+      </div>
+    </section>
+
+    <section class="transcript-container">
+      <div class="panel-box">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span class="flag-icon">🇯🇵</span> Tiếng Nhật (ASR Recognition)
+          </div>
+          <span id="jaCount" style="font-size: 0.8rem; color: var(--text-sub);">0 câu</span>
+        </div>
+        <div id="jaList" class="transcript-scroll">
+          <div class="transcript-card">
+            <div class="card-meta"><span>Hệ thống</span><span>Sẵn sàng</span></div>
+            <div class="card-text ja">音声入力またはテキストを入力してください。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-box">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span class="flag-icon">🇻🇳</span> Bản Dịch Tiếng Việt (Translation)
+          </div>
+          <span id="latencyTag" style="font-size: 0.8rem; color: var(--text-sub); font-family: 'JetBrains Mono', monospace;">0ms</span>
+        </div>
+        <div id="viList" class="transcript-scroll">
+          <div class="transcript-card vi">
+            <div class="card-meta"><span>Hệ thống</span><span>Sẵn sàng</span></div>
+            <div class="card-text vi">Vui lòng bật micro hoặc nhập câu tiếng Nhật để nghe/xem bản dịch realtime.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Realtime Translate JP to VN Bridge &bull; Apple Silicon M5 Pro Metal Optimized &bull; Python FastAPI WebSocket
+  </footer>
+
+  <script>
+    const WS_URL = (location.protocol === 'https:' ? 'wss://' : 'ws://') + (location.host || 'localhost:8765') + '/ws/translate';
+    
+    let ws = null;
+    let isRecording = false;
+    let audioContext = null;
+    let mediaStream = null;
+    let scriptProcessor = null;
+    let itemCounter = 0;
+    let lastWasPartial = false;
+
+    const btnMic = document.getElementById('btnMic');
+    const micText = document.getElementById('micText');
+    const micIcon = document.getElementById('micIcon');
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('statusText');
+    const audioLevel = document.getElementById('audioLevel');
+    const jaList = document.getElementById('jaList');
+    const viList = document.getElementById('viList');
+    const inputJa = document.getElementById('inputJa');
+    const btnTranslate = document.getElementById('btnTranslate');
+    const btnClear = document.getElementById('btnClear');
+    const latencyTag = document.getElementById('latencyTag');
+    const jaCount = document.getElementById('jaCount');
+
+    function connectWS() {
+      try {
+        ws = new WebSocket(WS_URL);
+        
+        ws.onopen = () => {
+          statusDot.className = 'status-dot connected';
+          statusText.innerText = 'Đã kết nối Server';
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.ja_text) {
+              addTranslationResult(data);
+            }
+          } catch (e) {
+            console.error('Failed to parse WS msg:', e);
+          }
+        };
+
+        ws.onclose = () => {
+          statusDot.className = 'status-dot';
+          statusText.innerText = 'Mất kết nối';
+          setTimeout(connectWS, 3000);
+        };
+
+        ws.onerror = (err) => {
+          console.error('WS Error:', err);
+        };
+      } catch (e) {
+        console.error('Connect failed:', e);
+      }
+    }
+
+    function addTranslationResult(data) {
+      itemCounter++;
+      jaCount.innerText = `${itemCounter} câu`;
+      if (data.latency_ms) {
+        latencyTag.innerText = `${data.latency_ms}ms`;
+      }
+
+      const now = new Date().toLocaleTimeString();
+
+      // A final marker after partials finalizes the last card — replace it, don't duplicate
+      if (data.is_final && lastWasPartial) {
+        jaList.querySelectorAll('.transcript-card:not(:first-child)').item(-1)?.remove();
+        viList.querySelectorAll('.transcript-card:not(:first-child)').item(-1)?.remove();
+      }
+      lastWasPartial = !data.is_final;
+
+      // JA Card
+      const jaCard = document.createElement('div');
+      jaCard.className = 'transcript-card';
+      jaCard.innerHTML = `
+        <div class="card-meta"><span>#${itemCounter}</span><span>${now}</span></div>
+        <div class="card-text ja">${escapeHtml(data.ja_text)}</div>
+      `;
+      jaList.appendChild(jaCard);
+      jaList.scrollTop = jaList.scrollHeight;
+
+      // VI Card
+      const viCard = document.createElement('div');
+      viCard.className = 'transcript-card vi';
+      viCard.innerHTML = `
+        <div class="card-meta"><span>Độ trễ: ${data.latency_ms || 0}ms</span><span>${now}</span></div>
+        <div class="card-text vi">${escapeHtml(data.vi_text)}</div>
+      `;
+      viList.appendChild(viCard);
+      viList.scrollTop = viList.scrollHeight;
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    async function startRecording() {
+      try {
+        mediaStream = await navigator.mediaDevices.getUserMedia({ audio: { sampleRate: 16000, channelCount: 1 } });
+        audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+        const source = audioContext.createMediaStreamSource(mediaStream);
+        
+        scriptProcessor = audioContext.createScriptProcessor(4096, 1, 1);
+        
+        scriptProcessor.onaudioprocess = (e) => {
+          if (!isRecording) return;
+          const inputData = e.inputBuffer.getChannelData(0);
+          
+          // Audio level visualization
+          let sum = 0;
+          for (let i = 0; i < inputData.length; i++) {
+            sum += inputData[i] * inputData[i];
+          }
+          const rms = Math.sqrt(sum / inputData.length);
+          audioLevel.style.width = Math.min(100, Math.round(rms * 400)) + '%';
+
+          // Convert Float32 to Int16 PCM
+          const pcm16 = new Int16Array(inputData.length);
+          for (let i = 0; i < inputData.length; i++) {
+            const s = Math.max(-1, Math.min(1, inputData[i]));
+            pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+          }
+
+          // Convert Int16Array to Base64
+          const bytes = new Uint8Array(pcm16.buffer);
+          let binary = '';
+          for (let i = 0; i < bytes.byteLength; i++) {
+            binary += String.fromCharCode(bytes[i]);
+          }
+          const base64Audio = btoa(binary);
+
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({
+              event: 'audio_chunk',
+              audio_base64: base64Audio,
+              is_final: false
+            }));
+          }
+        };
+
+        source.connect(scriptProcessor);
+        scriptProcessor.connect(audioContext.destination);
+
+        isRecording = true;
+        btnMic.className = 'btn-mic recording';
+        micText.innerText = 'Dừng thu âm';
+        micIcon.innerText = '⏹️';
+        statusDot.className = 'status-dot recording';
+        statusText.innerText = 'Đang lắng nghe...';
+      } catch (err) {
+        alert('Không thể truy cập Micro: ' + err.message);
+      }
+    }
+
+    function stopRecording() {
+      isRecording = false;
+
+      // Tell the server the utterance is done so it finalizes the last partial
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ event: 'audio_chunk', audio_base64: '', is_final: true }));
+      }
+
+      if (scriptProcessor) scriptProcessor.disconnect();
+      if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+      if (audioContext) audioContext.close();
+
+      btnMic.className = 'btn-mic';
+      micText.innerText = 'Bắt đầu thu âm';
+      micIcon.innerText = '🎙️';
+      audioLevel.style.width = '0%';
+      statusDot.className = ws && ws.readyState === WebSocket.OPEN ? 'status-dot connected' : 'status-dot';
+      statusText.innerText = ws && ws.readyState === WebSocket.OPEN ? 'Đã kết nối Server' : 'Chưa kết nối';
+    }
+
+    btnMic.addEventListener('click', () => {
+      if (isRecording) {
+        stopRecording();
+      } else {
+        startRecording();
+      }
+    });
+
+    btnTranslate.addEventListener('click', () => {
+      const text = inputJa.value.trim();
+      if (!text) return;
+      lastWasPartial = false; // new utterance — its final response must append, not replace
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ event: 'text', text: text }));
+        inputJa.value = '';
+      } else {
+        alert('Chưa kết nối WebSocket server!');
+      }
+    });
+
+    inputJa.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') btnTranslate.click();
+    });
+
+    btnClear.addEventListener('click', () => {
+      jaList.innerHTML = '';
+      viList.innerHTML = '';
+      itemCounter = 0;
+      jaCount.innerText = '0 câu';
+      latencyTag.innerText = '0ms';
+    });
+
+    // Start WebSocket
+    connectWS();
+  </script>
+</body>
+</html>
