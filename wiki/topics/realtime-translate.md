@@ -1,7 +1,7 @@
 # Topic: Realtime Translate JP To VN
 
 ## Status
-MVP Ready · **Phase A + B + C closed 2026-08-06** — B verified Cursor (disk). mlx `~65.7ms`. Living A/B: [plan-2026-08-06-bugfix-phase-a-b.md](../plan/plan-2026-08-06-bugfix-phase-a-b.md) · C: [plan-2026-08-06-phase4-latency.md](../plan/plan-2026-08-06-phase4-latency.md).
+MVP Ready · Phase A+B+C closed · **Open: utterance endpointing** ([plan](../plan/plan-2026-08-06-utterance-endpointing.md)) — DeepSeek trên `utterance-end/dev` → `deepseek/dev`. mlx ~65.7ms.
 
 ## Verified on real hardware (2026-08-06)
 - 7/7 unit tests pass (`python3 -m unittest discover -s tests`)
@@ -46,7 +46,7 @@ MVP Ready · **Phase A + B + C closed 2026-08-06** — B verified Cursor (disk).
 
 ## Open gaps
 - **Latency ASR**: Phase C **closed** — ~65.7ms/window (mlx); xem [plan C](../plan/plan-2026-08-06-phase4-latency.md).
-- **Streaming hallucination**: chunk giữa câu có thể ra text sai (`コンニング`); MVP chấp nhận, câu cuối luôn đúng qua `is_final`.
+- **Utterance jump / mid-sentence ASR**: greedy `get_window` 0.5–3s — plan fix silence endpointing [utterance-endpointing](../plan/plan-2026-08-06-utterance-endpointing.md) (DeepSeek).
 - Copy text: **đã đóng** bởi B1 (per card + copy all).
 
 ## System Overview
@@ -63,7 +63,8 @@ Hệ thống dịch tiếng Nhật sang tiếng Việt thời gian thực (near 
 - **Test Suite**: [test_pipeline.py](file:///Users/hoangson/Documents/Realtime%20Translate%20JP%20To%20VN/local-bridge/tests/test_pipeline.py)
 
 ## Raw Sources
-- Plan (active A/B): [plan-2026-08-06-bugfix-phase-a-b.md](file:///Users/hoangson/Documents/Realtime%20Translate%20JP%20To%20VN/plan/plan-2026-08-06-bugfix-phase-a-b.md)
+- Plan (active utterance-end): [plan-2026-08-06-utterance-endpointing.md](file:///Users/hoangson/Documents/Realtime%20Translate%20JP%20To%20VN/plan/plan-2026-08-06-utterance-endpointing.md)
+- Plan (closed A/B): [plan-2026-08-06-bugfix-phase-a-b.md](file:///Users/hoangson/Documents/Realtime%20Translate%20JP%20To%20VN/plan/plan-2026-08-06-bugfix-phase-a-b.md)
 - Plan (active C living): [plan-2026-08-06-phase4-latency.md](file:///Users/hoangson/Documents/Realtime%20Translate%20JP%20To%20VN/plan/plan-2026-08-06-phase4-latency.md)
 - Plan (Continue C snapshot): [plan-2026-08-06-continue-phase-c.md](file:///Users/hoangson/Documents/Realtime%20Translate%20JP%20To%20VN/plan/plan-2026-08-06-continue-phase-c.md)
 - Plan (stub SUPERSEDED): [plan-2026-08-06-bugfix-and-phase4-realtime-translate.md](file:///Users/hoangson/Documents/Realtime%20Translate%20JP%20To%20VN/plan/plan-2026-08-06-bugfix-and-phase4-realtime-translate.md) (split 2026-08-06)

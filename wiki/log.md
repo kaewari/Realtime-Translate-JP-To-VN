@@ -1,5 +1,10 @@
 # Wiki Log
 
+## [2026-08-06] ingest | Utterance endpointing plan — DeepSeek handoff
+
+- Plan: `plan/plan-2026-08-06-utterance-endpointing.md` — silence endpoint (0.6s) thay greedy window; executor DeepSeek; task branch `utterance-end/dev` → `deepseek/dev`.
+- Bug user: câu chưa hết đã nhảy timeline + ASR lỗi cao.
+
 ## [2026-08-06] ingest | AGENTS §1a → 3-level branches (task → agent → master)
 
 - Living rules: task xong → `{task}/dev` (prefer short: `a1/dev`); plan phase đóng → merge vào `{agent}/dev` rồi xóa task branches; plan tổng đóng → `master` + sync mọi `{agent}/dev`.
