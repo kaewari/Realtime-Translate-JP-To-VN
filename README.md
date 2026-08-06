@@ -51,7 +51,7 @@ plan/ review/       # plan/review file (bất biến, wiki là tổng hợp số
 ## Quickstart
 
 1. `cd local-bridge && python3.10 -m venv .venv && source .venv/bin/activate`
-2. `pip install -r requirements.txt` — ⚠️ bắt buộc `scipy==1.14.1` (đã pin): wheel scipy≥1.15 fail dyld trên macOS 27 với Python 3.10 → ASR âm thầm fallback mock
+2. `pip install -r requirements.txt` — ⚠️ bắt buộc `scipy==1.14.1` (đã pin): wheel scipy≥1.15 fail dyld trên macOS 27 với Python 3.10 → ASR âm thầm fallback mock; và `sentencepiece` (MarianTokenizer) — thiếu → MT FallbackDict, UI hiện `[Dịch: …]`
 3. `uvicorn app.main:app --port 8765`
 4. Mở <http://localhost:8765/> — lần dùng đầu models (whisper-small, opus-mt-ja-vi) tự download vào HF cache `~/.cache/huggingface/hub/`, gọi đầu ~10-30s (lazy-load), các gọi sau nhanh hơn
 5. (Tùy chọn) `curl localhost:8765/api/status` — xem engine ASR/MT đã load chưa

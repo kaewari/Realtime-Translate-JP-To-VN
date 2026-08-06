@@ -9,6 +9,7 @@ class TranslationService:
         self.model = None
         self.tokenizer = None
         self.is_loaded = False
+        self.load_failed = False  # sticky: don't retry MarianMT every miss (spam errors.log)
         self._init_fallback_dict()
 
     def _init_fallback_dict(self):
@@ -39,8 +40,8 @@ class TranslationService:
 
     def load_model(self):
         """Lazy load Helsinki-NLP/opus-mt-ja-vi or PyTorch model."""
-        if self.is_loaded:
-            return True
+        if self.is_loaded or self.load_failed:
+            return self.is_loaded
         try:
             from transformers import MarianMTModel, MarianTokenizer
             model_name = config.mt_model_name
@@ -55,6 +56,7 @@ class TranslationService:
         except Exception as e:
             log_warning(f"Could not load HuggingFace MT model '{config.mt_model_name}': {e}. Using fallback translator.")
             self.is_loaded = False
+            self.load_failed = True
             return False
 
     def translate(self, text: str) -> str:

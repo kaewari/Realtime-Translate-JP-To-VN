@@ -45,7 +45,7 @@ OBS · waveform · chat bubble · shimmer · VAD màu · glossary UI · cloud sy
 
 ## Mốc
 
-- [x] Sprint 1 đóng — ngày: 2026-08-06
+- [x] Sprint 1 đóng — ngày: 2026-08-06 · verified Cursor: 2026-08-06 (disk UX1–5; fix export `\\n`→newline; walkthrough dedupe; SHA `745d3d7` + verify patch)
 - [ ] Sprint 2 đóng — ngày: ____  
 - [ ] Plan D-UX đóng — verified: ____
 

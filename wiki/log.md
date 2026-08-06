@@ -1,5 +1,17 @@
 # Wiki Log
 
+## [2026-08-06] ingest | Restore D-UI plan + Gemini 3.1 Pro High prompt
+
+- `plan/plan-2026-08-06-restore-d-ui.md` — cherry-pick `c0bb784`, UI4 prepend bắt buộc, `is_final=True` trên silence emit, UI3 MT FallbackDict; appendix prompt Gemini.
+- Restore `plan/plan-2026-08-06-ui-visual.md` (status open — mất khỏi `antigravity/dev`).
+- Active: restore D-UI open · D-UX S1 vẫn verified · S2 open.
+
+## [2026-08-06] verify | D-UX Sprint 1 — Cursor disk OK (+ patch)
+
+- User: Gemini đã làm xong. Disk UX1–5 trên `web/index.html` (`745d3d7` antigravity/dev). Smoke: served UI có micSelect/Export/Space/dblclick/offline; `/api/translate` OK.
+- Patch khi verify: Export `\\n` → newline thật; dedupe walkthrough + wiki log trùng.
+- Sprint 2 (UX6–9) vẫn open. `plan/plan-2026-08-06-ui-visual.md` không còn trên disk; `origin/ui-visual/dev` không có commit D-UI. Remote `origin/ux-core/dev` còn sót (local đã xóa).
+
 ## [2026-08-06] verify | Utterance endpointing — Cursor disk OK
 
 - User: DeepSeek đã fix xong. Disk: `audio_buffer.pop_utterance` + config 3 field + WS `pop_utterance(flush=is_final)`; không còn `get_window` / `window_duration_sec`.
@@ -104,11 +116,6 @@
 - A1 to_thread (P0 event-loop blocking); A2 partial-group dọn card; A3 GainNode 0 hết feedback; A4 sample_rate contract + numpy resample 16k (smoke 48k: 1 WARNING/session); A5 load_failed + engine badge; A6 dead code + confidence Optional + dict strip dấu câu.
 - Smoke: /health 3ms khi WS transcribe; 48k chunk → pipeline vẫn trả kết quả. 7/7 tests pass (25.5s).
 - Plan ticked A1–A6 + mốc Phase A `2026-08-06 · verified Cursor/Bugbot: ____`. Gate Phase B chờ user chạy Cursor/Bugbot verify A.
-
-## [2026-08-06] ingest | D-UX Sprint 1 shipped
-
-- UX1 (mic selector), UX2 (export), UX3 (dblclick edit JA -> dịch lại), UX4 (phím space toggle mic), UX5 (offline status/reconnect UI) implemented in `web/index.html`.
-- Plan ticked.
 
 ## [2026-08-06] ingest | D-UX Sprint 1 shipped
 

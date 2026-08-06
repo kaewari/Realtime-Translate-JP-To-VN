@@ -829,14 +829,14 @@
       const viCards = [...viList.querySelectorAll('.transcript-card[data-item]')];
       if (jaCards.length === 0) return alert('Không có dữ liệu để xuất.');
       
-      let out = '# Realtime Translate JP → VN Studio\\n\\n';
+      let out = '# Realtime Translate JP → VN Studio\n\n';
       jaCards.reverse().forEach((jaC) => {
         const item = jaC.dataset.item;
         const viC = viCards.find(v => v.dataset.item === item);
         const jaText = jaC.querySelector('.card-text').innerText;
         const viText = viC ? viC.querySelector('.card-text').innerText : '';
         const timeStr = jaC.querySelector('.meta-right span').innerText;
-        out += `## [${timeStr}] #${item}\\n**JA:** ${jaText}\\n**VI:** ${viText}\\n\\n`;
+        out += `## [${timeStr}] #${item}\n**JA:** ${jaText}\n**VI:** ${viText}\n\n`;
       });
       
       const blob = new Blob([out], { type: 'text/markdown;charset=utf-8' });

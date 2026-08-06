@@ -39,6 +39,9 @@ uvicorn app.main:app --port 8765          # dev; or `source .venv/bin/activate` 
   Check `scipy==1.14.1` is pinned — `scipy>=1.15` wheels fail dyld on macOS 27/Python 3.10
   (`__thread_bss` in `_spropack`) → transformers pipeline crashes → fallback.
   Also check model weights cached (`~/.cache/huggingface/hub/`); first load ~10-30s.
+- **MT shows `[Dịch: …]` / `mt_engine=FallbackDict`**: MarianTokenizer needs `sentencepiece`
+  (`sentencepiece>=0.2.0` in requirements). Missing → load fails → dict-only fallback wraps
+  unknown phrases as `[Dịch: JA]`. Restart bridge after install (`load_failed` is sticky).
 - **Load failure is sticky**: `load_failed=True` disables retry per window (was spamming
   errors.log). Restart the bridge after fixing the cause.
 - **Blocking inference on event loop**: ASR/MT must go through `asyncio.to_thread`.

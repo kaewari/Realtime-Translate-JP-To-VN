@@ -72,20 +72,13 @@ Toàn bộ 7 bài test đã chạy thành công trong 5.038s (`python3 -m unitte
 - **UX4 (Phím tắt Space):** Hỗ trợ dùng phím Space (dấu cách) để bật/tắt nhanh microphone. Tự động bỏ qua khi người dùng đang gõ phím vào ô input/textarea.
 - **UX5 (Xử lý Offline):** Cải thiện trải nghiệm khi mất kết nối WebSocket. Tự động dừng thu âm, khoá nút thu âm và hiển thị trạng thái đang thử kết nối lại một cách rõ ràng.
 
-## Tính năng mới (D-UX Sprint 1)
-
-- **UX1 (Mic Selector):** Tự động `enumerateDevices` và hiển thị UI để người dùng chọn thiết bị đầu vào (Microphone) tuỳ ý thay vì luôn dùng mic mặc định.
-- **UX2 (Export):** Thêm nút **Export** để tải toàn bộ transcript hiện tại (Nhật + Việt) dưới dạng file Markdown (`.md`) kèm timestamp.
-- **UX3 (Sửa Text JA):** Hỗ trợ click đúp (double-click) vào câu tiếng Nhật để chỉnh sửa trực tiếp. Khi nhấn Enter, hệ thống gọi API `/api/translate` dịch lại và cập nhật thẻ tiếng Việt tương ứng.
-- **UX4 (Phím tắt Space):** Hỗ trợ dùng phím Space (dấu cách) để bật/tắt nhanh microphone. Tự động bỏ qua khi người dùng đang gõ phím vào ô input/textarea.
-- **UX5 (Xử lý Offline):** Cải thiện trải nghiệm khi mất kết nối WebSocket. Tự động dừng thu âm, khoá nút thu âm và hiển thị trạng thái đang thử kết nối lại một cách rõ ràng.
-
 ## Hướng dẫn chạy thử
 
-1. Cài dependencies (⚠️ `scipy==1.14.1` bắt buộc — wheel scipy≥1.15 fail dyld trên macOS 27 + Python 3.10 → ASR fallback mock âm thầm):
+1. Cài dependencies (⚠️ `scipy==1.14.1` + `sentencepiece` bắt buộc — thiếu sentencepiece → MarianMT fail âm thầm, VI hiện `[Dịch: …]`; scipy≥1.15 fail dyld trên macOS 27 + Python 3.10 → ASR fallback mock):
    ```bash
    cd local-bridge && pip install -r requirements.txt
    ```
+   (venv dùng uv: `uv pip install --python .venv/bin/python3 -r requirements.txt`)
 2. Chạy Backend Server:
    ```bash
    cd local-bridge && uvicorn app.main:app --port 8765
@@ -94,12 +87,6 @@ Toàn bộ 7 bài test đã chạy thành công trong 5.038s (`python3 -m unitte
 3. Mở giao diện Web Studio:
    - Truy cập `http://localhost:8765/` hoặc mở file `web/index.html`.
 4. Bấm **"Bắt đầu thu âm"** để nói trực tiếp hoặc nhập câu tiếng Nhật vào ô text để test độ trễ. Khi bấm **"Dừng thu âm"**, câu cuối được finalize (`is_final=true`, UI thay card cuối thay vì thêm trùng).
-5. Để test các tính năng UX mới:
-   - Thay đổi Micro từ dropdown kế bên nút thu âm (UX1).
-   - Nhấn phím Space để bật/tắt thu âm (UX4).
-   - Dịch thử vài câu, nhấn nút **Export** để tải file transcript (UX2).
-   - Nhấp đúp vào thẻ kết quả tiếng Nhật, sửa văn bản và nhấn Enter để dịch lại (UX3).
-   - Đóng tiến trình server terminal để thử giao diện báo mất kết nối và dừng thu âm (UX5).
 5. Để test các tính năng UX mới:
    - Thay đổi Micro từ dropdown kế bên nút thu âm (UX1).
    - Nhấn phím Space để bật/tắt thu âm (UX4).
