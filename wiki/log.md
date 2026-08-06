@@ -1,5 +1,10 @@
 # Wiki Log
 
+## [2026-08-06] sync | Plan tổng Phase D đóng → master `d4c2ca4`
+
+- FF `antigravity/dev` → `master`; sync `cursor/dev` · `claude/dev` · `deepseek/dev` · `antigravity/dev` = `d4c2ca4`; push origin.
+- Xóa remote task `ux-core/dev`. ASR junk filter + D-UX S2 verify docs nằm trong commit cuối.
+
 ## [2026-08-06] verify | D-UX Sprint 2 — Cursor disk OK · plan D-UX closed
 
 - Disk `antigravity/dev` @ `0593932`: UX6 PiP (`documentPictureInPicture` + `#btnPip`), UX7 localStorage `rt_*`, UX8 `.speak-btn` + `speechSynthesis` (+ verify patch `cancel()`), UX9 `manifest.json` + `icon.svg` (no SW).
