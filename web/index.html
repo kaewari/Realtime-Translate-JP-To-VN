@@ -21,6 +21,7 @@
       --text-sub: #94a3b8;
       --card-jp: rgba(30, 41, 59, 0.5);
       --card-vi: rgba(15, 23, 42, 0.8);
+      --vi-font-size: 1.05rem;
     }
 
     * {
@@ -112,6 +113,12 @@
       animation: pulse 1.2s infinite;
     }
 
+    .status-badge.warning-badge {
+      border-color: var(--accent-red);
+      color: var(--accent-red);
+      background: rgba(255, 71, 87, 0.1);
+    }
+
     @keyframes pulse {
       0% { transform: scale(1); opacity: 1; }
       50% { transform: scale(1.3); opacity: 0.6; }
@@ -187,7 +194,13 @@
       box-shadow: 0 4px 20px rgba(255, 65, 108, 0.5);
     }
 
-    .btn-mic:hover {
+    .btn-mic:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      filter: grayscale(1);
+    }
+
+    .btn-mic:hover:not(:disabled) {
       transform: translateY(-2px);
       filter: brightness(1.1);
     }
@@ -252,6 +265,14 @@
       gap: 1.5rem;
       flex: 1;
       min-height: 480px;
+    }
+
+    body.one-line-mode .ja-panel {
+      display: none;
+    }
+
+    body.one-line-mode .transcript-container {
+      grid-template-columns: 1fr;
     }
 
     @media (max-width: 850px) {
@@ -395,6 +416,7 @@
 
     .card-text.vi {
       color: #f1f5f9;
+      font-size: var(--vi-font-size);
     }
 
     @keyframes fadeIn {
@@ -445,10 +467,22 @@
         <button id="btnClear" class="btn-action">Xóa</button>
         <button id="btnExport" class="btn-action" title="Xuất file">Export</button>
       </div>
+      
+      <div class="display-controls" style="display: flex; align-items: center; gap: 1rem; padding-left: 1rem; border-left: 1px solid var(--panel-border);">
+        <select id="fontSizeVi" class="input-ja" style="padding: 0.5rem; max-width: max-content; font-size: 0.85rem; cursor: pointer;">
+          <option value="0.95rem">Chữ nhỏ</option>
+          <option value="1.05rem" selected>Chữ vừa</option>
+          <option value="1.3rem">Chữ lớn</option>
+          <option value="1.6rem">Rất lớn</option>
+        </select>
+        <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: var(--text-sub); cursor: pointer;">
+          <input type="checkbox" id="oneLineMode" style="accent-color: var(--accent-cyan); width: 16px; height: 16px; cursor: pointer;"> Chỉ VI
+        </label>
+      </div>
     </section>
 
     <section class="transcript-container">
-      <div class="panel-box">
+      <div class="panel-box ja-panel">
         <div class="panel-header">
           <div class="panel-title">
             <span class="flag-icon">🇯🇵</span> Tiếng Nhật (ASR Recognition)
@@ -519,12 +553,34 @@
     const btnCopyAllJa = document.getElementById('btnCopyAllJa');
     const btnCopyAllVi = document.getElementById('btnCopyAllVi');
     const micSelect = document.getElementById('micSelect');
+    const fontSizeVi = document.getElementById('fontSizeVi');
+    const oneLineMode = document.getElementById('oneLineMode');
+
+    fontSizeVi.addEventListener('change', (e) => {
+      document.documentElement.style.setProperty('--vi-font-size', e.target.value);
+    });
+
+    oneLineMode.addEventListener('change', (e) => {
+      if (e.target.checked) {
+        document.body.classList.add('one-line-mode');
+      } else {
+        document.body.classList.remove('one-line-mode');
+      }
+    });
 
     async function refreshEngineBadge() {
       try {
         const res = await fetch('/api/status');
         const data = await res.json();
         engineBadge.innerText = `ASR: ${data.asr_engine} · MT: ${data.mt_engine}`;
+        
+        const badgeContainer = engineBadge.closest('.status-badge');
+        const asrStr = (data.asr_engine || '').toLowerCase();
+        if (asrStr.includes('fallback') || asrStr.includes('mock')) {
+          badgeContainer.classList.add('warning-badge');
+        } else {
+          badgeContainer.classList.remove('warning-badge');
+        }
       } catch (e) {
         // server unreachable — keep last value
       }
@@ -596,8 +652,8 @@
         <div class="card-text ja" title="Nhấp đúp để sửa JA">${escapeHtml(data.ja_text)}</div>
       `;
       if (!data.is_final) jaCard.dataset.partialGroup = partialGroup;
-      jaList.appendChild(jaCard);
-      jaList.scrollTop = jaList.scrollHeight;
+      jaList.prepend(jaCard);
+      jaList.scrollTop = 0;
 
       // VI Card
       const viCard = document.createElement('div');
@@ -608,8 +664,8 @@
         <div class="card-text vi">${escapeHtml(data.vi_text)}</div>
       `;
       if (!data.is_final) viCard.dataset.partialGroup = partialGroup;
-      viList.appendChild(viCard);
-      viList.scrollTop = viList.scrollHeight;
+      viList.prepend(viCard);
+      viList.scrollTop = 0;
     }
 
     function escapeHtml(str) {

@@ -17,6 +17,17 @@
 - User: DeepSeek đã fix xong. Disk: `audio_buffer.pop_utterance` + config 3 field + WS `pop_utterance(flush=is_final)`; không còn `get_window` / `window_duration_sec`.
 - Suite: 11/11 OK (~2.3s). Plan mốc verified Cursor. SHA `3393934` trên `deepseek/dev` (+ `antigravity/dev`, `ux-core/dev`). Task branch `utterance-end/dev` đã xóa. Chưa lên `master` (đúng §1a — chưa đóng plan tổng mới).
 
+## [2026-08-06] ingest | Phase D-UI (Visual) shipped
+
+- UI1 (Cỡ chữ VN), UI2 (Chế độ 1 dòng VI), UI3 (Badge cảnh báo MOCK/offline & disable mic).
+- Code trên nhánh `ui-visual/dev` (Antigravity). File đổi: `web/index.html`.
+- Plan `plan-2026-08-06-ui-visual.md` checked.
+
+## [2026-08-06] ingest | Phase D-UI + D-UX plans + Gemini prompts
+
+- `plan/plan-2026-08-06-ui-visual.md` — UI1–3; Antigravity Gemini 3.1 Pro High; `ui-visual/dev`.
+- `plan/plan-2026-08-06-ux-interaction.md` — UX S1+S2 + prompts; `ux-core/dev` / `ux-pip/dev`.
+
 ## [2026-08-06] implement | Utterance endpointing — DeepSeek (`deepseek/dev`)
 
 - `pop_utterance()` thay `get_window`: emit khi silence ≥ 0.6s sau speech ≥ 0.4s, hoặc buffer ≥ 8s, hoặc flush. Config 3 field mới. WS `is_final` → flush.
