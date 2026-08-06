@@ -1,5 +1,11 @@
 # Wiki Log
 
+## [2026-08-07] ingest | Codebase review — all plans 100% on disk
+
+- Raw: `review/codebase-review-2026-08-07.md` — disk verify A/B/C, utterance-end, D-UI, D-UX S1+S2; không gap trong scope plan.
+- Cursor spot-check: to_thread · pop_utterance · mlx · junk filter · prepend · PiP · manifest · localStorage · GainNode0 · fixture wav — PASS.
+- Commit review + wiki; push `master` + sync mọi `{agent}/dev`.
+
 ## [2026-08-06] sync | Plan tổng Phase D đóng → master `d4c2ca4`
 
 - FF `antigravity/dev` → `master`; sync `cursor/dev` · `claude/dev` · `deepseek/dev` · `antigravity/dev` = `d4c2ca4`; push origin.

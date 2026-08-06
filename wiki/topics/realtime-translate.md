@@ -1,7 +1,7 @@
 # Topic: Realtime Translate JP To VN
 
 ## Status
-MVP Ready · A+B+C closed · utterance-end verified · D-UI restored (`d9e9b9f`) · **D-UX closed** (S1+S2 verified Cursor 2026-08-06 @ `0593932` — [ux-interaction](../plan/plan-2026-08-06-ux-interaction.md)). mlx ~65.7ms.
+MVP Ready · **All living plans verified closed** ([review 2026-08-07](../review/codebase-review-2026-08-07.md)) · A+B+C · utterance-end · D-UI · D-UX S1+S2 · master `de61b62`+. mlx ~65.7ms.
 
 ## Verified on real hardware (2026-08-06)
 - 7/7 unit tests pass (`python3 -m unittest discover -s tests`)
@@ -45,12 +45,10 @@ MVP Ready · A+B+C closed · utterance-end verified · D-UI restored (`d9e9b9f`)
 - Tests: **8/8 pass (1.4s)** + smoke /health + /api/status + served UI có nút copy.
 
 ## Open gaps
-- **Latency ASR**: Phase C **closed** — ~65.7ms/window (mlx); xem [plan C](../plan/plan-2026-08-06-phase4-latency.md).
-- **Utterance jump / mid-sentence ASR**: **verified closed 2026-08-06** — `pop_utterance` silence endpointing (0.6s/8.0s/0.4s) thay greedy `get_window` [utterance-endpointing](../plan/plan-2026-08-06-utterance-endpointing.md); Cursor disk + 11/11 tests.
-- Copy text: **đã đóng** bởi B1 (per card + copy all).
-- **D-UX Sprint 1**: **verified closed** — mic / export / edit JA / Space / offline ([ux-interaction](../plan/plan-2026-08-06-ux-interaction.md)).
-- **D-UX Sprint 2**: **verified closed** Cursor 2026-08-06 @ `0593932` — PiP (`documentPictureInPicture`), localStorage restore, TTS VI (`.speak-btn` + `cancel()`), `manifest.json` + `icon.svg` (no SW). Plan D-UX đóng.
-- **D-UI**: **restored** trên `antigravity/dev` @ `d9e9b9f` (UI1–4 + is_final) — [restore](../plan/plan-2026-08-06-restore-d-ui.md) · [ui-visual](../plan/plan-2026-08-06-ui-visual.md).
+- Không còn gap trong scope các living plan (review disk 2026-08-07: 100%).
+- **Latency ASR**: Phase C **closed** — ~65.7ms/window (mlx).
+- **Utterance jump**: **closed** — `pop_utterance` silence endpointing.
+- **D-UI / D-UX S1+S2**: **closed**.
 
 ## System Overview
 Hệ thống dịch tiếng Nhật sang tiếng Việt thời gian thực (near real-time), hoạt động hoàn toàn cục bộ (local-first) trên Apple Silicon Mac M5 Pro.
@@ -68,9 +66,10 @@ Hệ thống dịch tiếng Nhật sang tiếng Việt thời gian thực (near 
 ## Raw Sources
 - Plan (closed utterance-end, verified Cursor): [plan-2026-08-06-utterance-endpointing.md](file:///Users/hoangson/Documents/Realtime%20Translate%20JP%20To%20VN/plan/plan-2026-08-06-utterance-endpointing.md)
 - Plan (closed A/B): [plan-2026-08-06-bugfix-phase-a-b.md](file:///Users/hoangson/Documents/Realtime%20Translate%20JP%20To%20VN/plan/plan-2026-08-06-bugfix-phase-a-b.md)
-- Plan (active C living): [plan-2026-08-06-phase4-latency.md](file:///Users/hoangson/Documents/Realtime%20Translate%20JP%20To%20VN/plan/plan-2026-08-06-phase4-latency.md)
+- Plan (closed C living): [plan-2026-08-06-phase4-latency.md](file:///Users/hoangson/Documents/Realtime%20Translate%20JP%20To%20VN/plan/plan-2026-08-06-phase4-latency.md)
 - Plan (Continue C snapshot): [plan-2026-08-06-continue-phase-c.md](file:///Users/hoangson/Documents/Realtime%20Translate%20JP%20To%20VN/plan/plan-2026-08-06-continue-phase-c.md)
 - Plan (stub SUPERSEDED): [plan-2026-08-06-bugfix-and-phase4-realtime-translate.md](file:///Users/hoangson/Documents/Realtime%20Translate%20JP%20To%20VN/plan/plan-2026-08-06-bugfix-and-phase4-realtime-translate.md) (split 2026-08-06)
 - Plan (closed): [plan-2026-08-05-realtime-translate-jp-to-vn.md](file:///Users/hoangson/Documents/Realtime%20Translate%20JP%20To%20VN/plan/plan-2026-08-05-realtime-translate-jp-to-vn.md) (SUPERSEDED 2026-08-06; header cập nhật: scipy pin, MPS default, is_final fix)
+- Review: [codebase-review-2026-08-07.md](file:///Users/hoangson/Documents/Realtime%20Translate%20JP%20To%20VN/review/codebase-review-2026-08-07.md) (bất biến — audit plan completion: 100% on disk)
 - Review: [review-realtime-translate-implementation-2026-08-06.md](file:///Users/hoangson/Documents/Realtime%20Translate%20JP%20To%20VN/review/review-realtime-translate-implementation-2026-08-06.md) (bất biến — findings đã phản ánh vào plan/wiki)
-- Review: [codebase-bugcheck-2026-08-06.md](file:///Users/hoangson/Documents/Realtime%20Translate%20JP%20To%20VN/review/codebase-bugcheck-2026-08-06.md) (bất biến — bugcheck P0/P1, chưa fix)
+- Review: [codebase-bugcheck-2026-08-06.md](file:///Users/hoangson/Documents/Realtime%20Translate%20JP%20To%20VN/review/codebase-bugcheck-2026-08-06.md) (bất biến — P0/P1 đã fix Phase A)
