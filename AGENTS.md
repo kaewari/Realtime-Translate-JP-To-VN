@@ -64,20 +64,23 @@ Header:
 
 ---
 
-## 1a. Git branches (mọi agent)
+## 1a. Git branches (mọi agent) — 3 levels
 
-| Khi | Branch | Việc |
-|-----|--------|------|
-| Agent bắt đầu code | `{agent}/dev` | Tạo/checkout branch tên agent + `/dev`. Ví dụ: `cursor/dev`, `claude/dev`, `deepseek/dev`, `antigravity/dev`. |
-| Plan phase của agent xong | cùng `{agent}/dev` | Commit + **push** branch đó lên remote. |
-| **Plan tổng** (A+B+C / mọi phase living) xong | `master` | Merge/ff `{agent}/dev` → `master`, **push `master`**, rồi **sync mọi `*/dev`** về cùng commit với `master` (ff hoặc reset cứng local branch về `master` rồi push). |
+Preferred task branch name: short kebab + `/dev` — e.g. `a1/dev`, `b1/dev`, `c-verify/dev`, `agents-git-rules/dev`. Longer ok when needed (`a1-to-thread/dev`, `phase-a/dev`); keep it simple.
+
+| Level | Khi | Branch | Việc |
+|-------|-----|--------|------|
+| 1. **Task** | Agent bắt đầu / xong một *task* (A1, B4, named small task) | `{task}/dev` | Create/checkout trước khi code. Task xong → commit + **push** `{task}/dev`. |
+| 2. **Agent** | **Plan phase** đóng (Phase A/B plan, Phase C plan, …) | `{agent}/dev` | Merge mọi task branch liên quan → `{agent}/dev` (vd. `cursor/dev`, `claude/dev`, `deepseek/dev`, `antigravity/dev`), push `{agent}/dev`, rồi **xóa** các task branch đã merge (local + remote nếu có `origin`). |
+| 3. **master** | **Plan tổng** đóng (mọi phase living xong) | `master` | Merge/ff agent work → `master`, **push `master`**, rồi **sync mọi `{agent}/dev`** về cùng commit với `master` và push chúng. Không để sót task branch stale. |
 
 Quy tắc:
 
-- Tên agent = chữ thường, không dấu: `cursor`, `claude`, `deepseek`, `antigravity`, … (free-claude-code → `claude` hoặc `deepseek` tùy model backend đang dùng — ghi rõ trong commit message).
-- Không commit trực tiếp lên `master` khi đang làm dở phase; chỉ lên `master` khi plan tổng đóng.
-- Trước push: không `--force` lên `master`. Sync `*/dev` sau khi `master` đã cập nhật: `git branch -f <agent>/dev master` rồi `git push -u origin <agent>/dev` (force-with-lease chỉ trên `*/dev` nếu remote lệch và user đồng ý).
-- Chưa có `origin`: vẫn tạo/commit/sync local; báo user thêm remote rồi push.
+- Create/checkout đúng branch **trước** khi code task đó.
+- Tên agent = chữ thường, không dấu: `cursor`, `claude`, `deepseek`, `antigravity`, … (free-claude-code → `claude` hoặc `deepseek` tùy model backend — ghi rõ trong commit message).
+- Không commit trực tiếp lên `master` khi work còn dở; chỉ lên `master` khi plan tổng đóng.
+- Không `--force` lên `master`. Sau merge task → agent: xóa task branch là expected. Sync `{agent}/dev` sau khi `master` cập nhật: `git branch -f <agent>/dev master` rồi `git push -u origin <agent>/dev` (force-with-lease chỉ trên `*/dev` nếu remote lệch và user đồng ý).
+- Chưa có `origin`: vẫn commit / merge / xóa local; báo user thêm remote rồi push.
 
 ---
 

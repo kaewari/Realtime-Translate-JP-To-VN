@@ -1,5 +1,10 @@
 # Wiki Log
 
+## [2026-08-06] ingest | AGENTS §1a → 3-level branches (task → agent → master)
+
+- Living rules: task xong → `{task}/dev` (prefer short: `a1/dev`); plan phase đóng → merge vào `{agent}/dev` rồi xóa task branches; plan tổng đóng → `master` + sync mọi `{agent}/dev`.
+- Không commit thẳng `master` khi đang làm; không `--force` `master`. Chưa có `origin` → local only, báo user thêm remote.
+
 ## [2026-08-06] ingest | AGENTS §1a agent branches + local master sync
 
 - AGENTS: agent code trên `{agent}/dev`; plan phase xong → push branch đó; plan tổng xong → `master` rồi sync mọi `*/dev`.
