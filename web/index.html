@@ -576,7 +576,8 @@
         
         const badgeContainer = engineBadge.closest('.status-badge');
         const asrStr = (data.asr_engine || '').toLowerCase();
-        if (asrStr.includes('fallback') || asrStr.includes('mock')) {
+        const mtStr = (data.mt_engine || '').toLowerCase();
+        if (asrStr.includes('fallback') || asrStr.includes('mock') || mtStr.includes('fallbackdict')) {
           badgeContainer.classList.add('warning-badge');
         } else {
           badgeContainer.classList.remove('warning-badge');

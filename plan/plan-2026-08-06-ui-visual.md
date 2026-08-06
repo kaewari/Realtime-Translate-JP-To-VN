@@ -21,10 +21,10 @@
 
 | ID | Mục | Status |
 |----|-----|--------|
-| UI1 | Cỡ chữ VN (S/M/L) — CSS var `--vi-font-size` trên `.card-text.vi` | [ ] mất khỏi HEAD — restore |
-| UI2 | Chế độ 1 dòng VI (`body.one-line-mode`, ẩn cột JA) | [ ] mất khỏi HEAD — restore |
-| UI3 | Badge đỏ `fallback`/`mock` ASR **hoặc** MT `FallbackDict` / WS offline | [ ] partial — mở rộng MT |
-| UI4 | Newest-on-top — `jaList.prepend` / `viList.prepend` | [ ] HEAD đang `appendChild` — **bắt buộc sửa** |
+| UI1 | Cỡ chữ VN (S/M/L) — CSS var `--vi-font-size` trên `.card-text.vi` | [x] restore `c0bb784` |
+| UI2 | Chế độ 1 dòng VI (`body.one-line-mode`, ẩn cột JA) | [x] restore `c0bb784` |
+| UI3 | Badge đỏ `fallback`/`mock` ASR **hoặc** MT `FallbackDict` / WS offline | [x] restore `c0bb784` + fix MT check |
+| UI4 | Newest-on-top — `jaList.prepend` / `viList.prepend` | [x] Đã sử dụng prepend đúng yêu cầu |
 
 File chính: [`web/index.html`](../web/index.html).
 

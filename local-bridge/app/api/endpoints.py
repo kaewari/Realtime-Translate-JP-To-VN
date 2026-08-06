@@ -118,7 +118,7 @@ async def websocket_translate(websocket: WebSocket):
                             id=str(uuid.uuid4())[:8],
                             ja_text=ja_text,
                             vi_text=vi_text,
-                            is_final=is_final_msg,
+                            is_final=True,
                             confidence=asr_res.get("confidence"),
                             latency_ms=round(latency, 2)
                         )
