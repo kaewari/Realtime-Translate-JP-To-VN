@@ -59,6 +59,16 @@ class TestLocalBridgePipeline(unittest.TestCase):
         self.assertFalse(self.vad.is_speech(silence))
         self.assertTrue(self.vad.is_speech(signal))
 
+    def _feed(self, seconds, amplitude=0.0, chunk_sec=0.1):
+        """Feed `seconds` of sine (speech) or zeros (silence) in chunk_sec chunks."""
+        for _ in range(int(round(seconds / chunk_sec))):
+            n = int(chunk_sec * 16000)
+            if amplitude:
+                chunk = (np.sin(2 * np.pi * 440 * np.arange(n) / 16000) * amplitude).astype(np.float32)
+            else:
+                chunk = np.zeros(n, dtype=np.float32)
+            self.buffer_mgr.add_float32(chunk)
+
     def test_audio_buffer(self):
         """Test AudioBufferManager accumulating base64 pcm16."""
         dummy_pcm = (np.sin(np.linspace(0, 440 * 2 * np.pi, 16000)) * 10000).astype(np.int16)
@@ -66,9 +76,34 @@ class TestLocalBridgePipeline(unittest.TestCase):
         b64_str = base64.b64encode(raw_bytes).decode('utf-8')
 
         self.buffer_mgr.add_base64_pcm16(b64_str)
-        window = self.buffer_mgr.get_window(max_seconds=2.0, min_seconds=0.5)
+        window = self.buffer_mgr.pop_utterance(flush=True)
         self.assertIsNotNone(window)
         self.assertGreater(len(window), 0)
+
+    def test_pop_utterance_speech_then_silence(self):
+        """Speech 2s + silence 0.7s -> exactly one emit of the 2s speech (trailing silence trimmed)."""
+        self._feed(2.0, amplitude=0.5)
+        self._feed(0.7)  # silence
+        window = self.buffer_mgr.pop_utterance()
+        self.assertIsNotNone(window)
+        self.assertEqual(len(window), 2 * 16000)  # ~2s, no trailing silence
+        self.assertIsNone(self.buffer_mgr.pop_utterance())  # nothing left
+
+    def test_pop_utterance_continuous_below_max(self):
+        """Continuous speech < max_utterance_sec -> 0 emits; flush emits it."""
+        self._feed(7.0, amplitude=0.5)
+        self.assertIsNone(self.buffer_mgr.pop_utterance())
+        window = self.buffer_mgr.pop_utterance(flush=True)
+        self.assertIsNotNone(window)
+        self.assertEqual(len(window), 7 * 16000)
+
+    def test_pop_utterance_max_cap(self):
+        """Continuous speech >= max_utterance_sec -> exactly one emit at the cap."""
+        self._feed(8.0, amplitude=0.5)
+        window = self.buffer_mgr.pop_utterance()
+        self.assertIsNotNone(window)
+        self.assertEqual(len(window), 8 * 16000)
+        self.assertIsNone(self.buffer_mgr.pop_utterance())
 
     def test_asr_service_mock(self):
         """Unit: ASR returns model text with mocked pipe — no model load, fast."""

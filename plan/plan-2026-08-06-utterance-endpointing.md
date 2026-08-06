@@ -54,15 +54,15 @@ Config ([`config.py`](../local-bridge/app/core/config.py)):
 
 ## Checklist
 
-- [ ] config 3 field
-- [ ] `pop_utterance` + tests (speech+silence → 1 emit; continuous &lt; max → 0; ≥ max → 1)
-- [ ] wire WS endpoints
-- [ ] suite xanh
-- [ ] tick plan + wiki; commit `utterance-end/dev`; push; merge `deepseek/dev`; xóa task branch
+- [x] config 3 field
+- [x] `pop_utterance` + tests (speech+silence → 1 emit; continuous &lt; max → 0; ≥ max → 1)
+- [x] wire WS endpoints
+- [x] suite xanh
+- [x] tick plan + wiki; commit `utterance-end/dev`; push; merge `deepseek/dev`; xóa task branch
 
 ## Mốc
 
-- [ ] Plan đóng — ngày: ____ · verified Cursor: ____
+- [x] Plan đóng — ngày: 2026-08-06 · verified Cursor: ____
 
 ## Out of scope
 

@@ -1,5 +1,10 @@
 # Wiki Log
 
+## [2026-08-06] implement | Utterance endpointing — DeepSeek (`deepseek/dev`)
+
+- `pop_utterance()` thay `get_window`: emit khi silence ≥ 0.6s sau speech ≥ 0.4s, hoặc buffer ≥ 8s, hoặc flush. Config 3 field mới. WS `is_final` → flush.
+- Tests: speech 2s + silence 0.7s → 1 emit ~2s; continuous <8s → 0 emit; ≥8s → 1 emit. 11/11 xanh. Chờ Cursor verify.
+
 ## [2026-08-06] ingest | Utterance endpointing plan — DeepSeek handoff
 
 - Plan: `plan/plan-2026-08-06-utterance-endpointing.md` — silence endpoint (0.6s) thay greedy window; executor DeepSeek; task branch `utterance-end/dev` → `deepseek/dev`.

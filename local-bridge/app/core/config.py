@@ -10,11 +10,15 @@ class AppConfig(BaseModel):
     sample_rate: int = 16000
     channels: int = 1
     sample_width: int = 2  # 16-bit PCM
-    window_duration_sec: float = 3.0  # sliding window for ASR
 
     # VAD config
     vad_energy_threshold: float = 0.015  # RMS threshold for energy VAD
     vad_enabled: bool = True
+
+    # Utterance endpointing (silence-based)
+    endpoint_silence_sec: float = 0.6  # trailing silence before emitting an utterance
+    max_utterance_sec: float = 8.0  # force emit at this buffer length
+    min_speech_sec: float = 0.4  # minimum accumulated speech before any emit
     
     # Model config
     asr_model_name: str = "openai/whisper-small"

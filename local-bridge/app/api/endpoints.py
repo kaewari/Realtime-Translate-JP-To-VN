@@ -104,7 +104,7 @@ async def websocket_translate(websocket: WebSocket):
                     buffer_mgr.add_base64_pcm16(audio_b64, source_sample_rate=chunk_sr)
 
                 is_final_msg = msg_dict.get("is_final", False)
-                audio_window = buffer_mgr.get_window() if not is_final_msg else buffer_mgr.flush()
+                audio_window = buffer_mgr.pop_utterance(flush=is_final_msg)
 
                 if audio_window is not None and len(audio_window) > 0:
                     # Run ASR (off the event loop: model inference blocks)

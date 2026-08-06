@@ -1,7 +1,7 @@
 # Topic: Realtime Translate JP To VN
 
 ## Status
-MVP Ready · Phase A+B+C closed · **Open: utterance endpointing** ([plan](../plan/plan-2026-08-06-utterance-endpointing.md)) — DeepSeek trên `utterance-end/dev` → `deepseek/dev`. mlx ~65.7ms.
+MVP Ready · Phase A+B+C closed · **Utterance endpointing implemented 2026-08-06** (DeepSeek, [`utterance-end/dev`] → merged `deepseek/dev`) — chờ Cursor verify ([plan](../plan/plan-2026-08-06-utterance-endpointing.md)). mlx ~65.7ms.
 
 ## Verified on real hardware (2026-08-06)
 - 7/7 unit tests pass (`python3 -m unittest discover -s tests`)
@@ -46,7 +46,7 @@ MVP Ready · Phase A+B+C closed · **Open: utterance endpointing** ([plan](../pl
 
 ## Open gaps
 - **Latency ASR**: Phase C **closed** — ~65.7ms/window (mlx); xem [plan C](../plan/plan-2026-08-06-phase4-latency.md).
-- **Utterance jump / mid-sentence ASR**: greedy `get_window` 0.5–3s — plan fix silence endpointing [utterance-endpointing](../plan/plan-2026-08-06-utterance-endpointing.md) (DeepSeek).
+- **Utterance jump / mid-sentence ASR**: **fixed 2026-08-06** — `pop_utterance` silence endpointing (0.6s/8.0s/0.4s) thay greedy `get_window` [utterance-endpointing](../plan/plan-2026-08-06-utterance-endpointing.md); chờ Cursor verify.
 - Copy text: **đã đóng** bởi B1 (per card + copy all).
 
 ## System Overview

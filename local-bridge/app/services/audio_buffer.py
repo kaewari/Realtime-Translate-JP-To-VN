@@ -1,7 +1,7 @@
 """Real-time streaming Audio Buffer manager."""
 import base64
 import numpy as np
-from typing import Optional, Tuple, List
+from typing import Optional
 from app.core.config import config
 from app.services.vad_service import vad_service
 
@@ -9,6 +9,8 @@ class AudioBufferManager:
     def __init__(self, sample_rate: int = 16000):
         self.sample_rate = sample_rate
         self.buffer = np.array([], dtype=np.float32)
+        self.total_speech_sec = 0.0      # speech accumulated since last emit
+        self.trailing_silence_sec = 0.0  # continuous silence since last speech chunk
 
     def add_base64_pcm16(self, b64_str: str, source_sample_rate: int = None) -> None:
         """Add base64-encoded 16-bit PCM audio data to buffer."""
@@ -37,47 +39,53 @@ class AudioBufferManager:
         return np.interp(x_out, x_in, audio_data).astype(np.float32)
 
     def add_float32(self, audio_data: np.ndarray) -> None:
-        """Add float32 audio samples to buffer."""
+        """Add float32 audio samples to buffer, tracking trailing silence via VAD on the chunk tail."""
         if audio_data is None or len(audio_data) == 0:
             return
+        chunk_dur = len(audio_data) / self.sample_rate
+        # VAD on tail ~200ms: a chunk mixing speech->silence is judged by its end
+        # (ponytail: chunk-level heuristic, fine for ~20-100ms realtime chunks)
+        tail = audio_data[-min(len(audio_data), int(self.sample_rate * 0.2)):]
+        # vad disabled: treat everything as speech -> endpointing falls back to max/flush
+        is_speech = (not config.vad_enabled) or vad_service.is_speech(tail, self.sample_rate)
+        if is_speech:
+            self.total_speech_sec += chunk_dur
+            self.trailing_silence_sec = 0.0
+        else:
+            self.trailing_silence_sec += chunk_dur
         self.buffer = np.concatenate([self.buffer, audio_data])
 
-    def get_window(self, max_seconds: float = 3.0, min_seconds: float = 0.5) -> Optional[np.ndarray]:
-        """Extract a processable speech window if enough audio accumulated."""
-        min_samples = int(self.sample_rate * min_seconds)
-        max_samples = int(self.sample_rate * max_seconds)
+    def pop_utterance(self, flush: bool = False) -> Optional[np.ndarray]:
+        """Emit one complete utterance, or None if the utterance is still ongoing.
 
-        if len(self.buffer) < min_samples:
-            return None
+        Emits when trailing silence >= endpoint_silence_sec after >= min_speech_sec of
+        speech, or buffer >= max_utterance_sec, or flush (is_final).
+        Silence-end: trailing silence is trimmed; max-cap: whole buffer (overlap 0).
+        """
+        if flush:
+            window = self.buffer
+            self._reset()
+            return window if len(window) > 0 else None
 
-        # Check if current buffer contains speech via VAD
-        if config.vad_enabled:
-            is_speech = vad_service.is_speech(self.buffer, self.sample_rate)
-            if not is_speech:
-                # Flush silence if buffer exceeds max_seconds
-                if len(self.buffer) > max_samples:
-                    self.buffer = np.array([], dtype=np.float32)
-                return None
+        dur = len(self.buffer) / self.sample_rate
+        if (self.total_speech_sec >= config.min_speech_sec
+                and self.trailing_silence_sec >= config.endpoint_silence_sec):
+            keep = max(0, len(self.buffer) - int(round(self.trailing_silence_sec * self.sample_rate)))
+            window = self.buffer[:keep]
+            self._reset()
+            return window if len(window) > 0 else None
 
-        # Slice up to max_samples
-        samples_to_take = min(len(self.buffer), max_samples)
-        window = self.buffer[:samples_to_take]
-        
-        # Advance buffer by samples_to_take or step
-        step = int(self.sample_rate * 1.5)  # 1.5s step for sliding window
-        if len(self.buffer) > max_samples:
-            self.buffer = self.buffer[step:]
-        else:
-            self.buffer = np.array([], dtype=np.float32)
-            
-        return window
+        if dur >= config.max_utterance_sec:
+            if self.total_speech_sec >= config.min_speech_sec:
+                window = self.buffer
+                self._reset()
+                return window
+            # pure/stale overflow silence with no speech — drop, don't ASR silence
+            self._reset()
+        return None
 
-    def flush(self) -> np.ndarray:
-        """Flush remaining buffer."""
-        remaining = self.buffer
+    def _reset(self) -> None:
+        """Clear buffer and endpointing state."""
         self.buffer = np.array([], dtype=np.float32)
-        return remaining
-
-    def clear(self) -> None:
-        """Clear buffer state."""
-        self.buffer = np.array([], dtype=np.float32)
+        self.total_speech_sec = 0.0
+        self.trailing_silence_sec = 0.0
