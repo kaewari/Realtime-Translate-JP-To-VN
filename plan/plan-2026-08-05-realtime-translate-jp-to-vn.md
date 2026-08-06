@@ -1,5 +1,7 @@
 # Plan: Realtime dịch Nhật sang tiếng Việt
 
+> ⚠️ **SUPERSEDED 2026-08-06** — Phase 1-3 (MVP) đã xong; thay bằng `plan/plan-2026-08-06-bugfix-and-phase4-realtime-translate.md` (bugfix P0/P1 + Phase 4). File này đóng, không sửa tiếp.
+
 > **Cập nhật 2026-08-06 (tối)** — Verifying review claim trên máy thật: 7/7 unit tests pass; whisper-small ASR chạy thật (こんにちは → đúng, MPS ~5.8s, CPU ~8.2s); MarianMT opus-mt-ja-vi chạy thật (今日はとてもいい天気ですね → Hôm nay là một ngày đẹp trời.); dict fast-path ~0.00s; E2E WebSocket với audio thật ra `こんにちは。→ Xin chào.`. Đã fix scipy pin (xem dưới) và fix contract `is_final` (server finalize + client flush/dedupe). Phase 1-3 (MVP) hoàn thành; Phase 4 (whisper.cpp/MLX) là việc tương lai.
 
 ## Cấu hình máy (đã kiểm tra 2026-08-05)
