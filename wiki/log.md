@@ -1,5 +1,11 @@
 # Wiki Log
 
+## [2026-08-06] ingest | AGENTS §1a agent branches + local master sync
+
+- AGENTS: agent code trên `{agent}/dev`; plan phase xong → push branch đó; plan tổng xong → `master` rồi sync mọi `*/dev`.
+- Plan tổng A+B+C closed → commit `d2df5e8` trên `master`; local sync: `claude/dev`, `cursor/dev`, `deepseek/dev`, `antigravity/dev` = `master`.
+- **Chưa có `git remote`** — chưa push; user thêm `origin` rồi `git push -u origin master` + push các `*/dev`.
+
 ## [2026-08-06] query | Phase B verified closed (Cursor disk)
 
 - User: plan B đã xong. Disk check: B1 copy UI · B2 `testdata/audio/konnichiwa-16k.wav` · B3 mock+fixture tests · B4 5/5 SKILL.md · B5 README không skeleton · B6 không `allow_credentials` · 8/8 tests OK.
