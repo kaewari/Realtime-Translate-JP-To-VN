@@ -37,10 +37,11 @@ __pycache__/
 *.pyc
 *.egg-info/
 
-# Local-only device / machine config
-data/config/device_id.txt
-data/config/extension_state.json
+# Local-only device / machine config (AGENTS §8 — không lên GitHub)
+data/config/*
+!data/config/.gitkeep
 local-bridge/data/extension_state.json
+
 
 # ASR / MT models — weights too large for GitHub (bootstrap re-downloads)
 *.sqlite*
