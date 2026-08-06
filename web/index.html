@@ -149,6 +149,21 @@
       gap: 1rem;
     }
 
+    .mic-select {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      color: var(--text-main);
+      padding: 0.5rem;
+      font-size: 0.85rem;
+      outline: none;
+      max-width: 150px;
+    }
+
+    .mic-select:focus {
+      border-color: var(--accent-cyan);
+    }
+
     .btn-mic {
       display: flex;
       align-items: center;
@@ -418,6 +433,7 @@
           <span id="micIcon">🎙️</span>
           <span id="micText">Bắt đầu thu âm</span>
         </button>
+        <select id="micSelect" class="mic-select" style="display: none;"></select>
         <div class="audio-meter">
           <div id="audioLevel" class="audio-level"></div>
         </div>
@@ -427,6 +443,7 @@
         <input id="inputJa" type="text" class="input-ja" placeholder="Nhập câu tiếng Nhật để dịch thử..." />
         <button id="btnTranslate" class="btn-action">Dịch</button>
         <button id="btnClear" class="btn-action">Xóa</button>
+        <button id="btnExport" class="btn-action" title="Xuất file">Export</button>
       </div>
     </section>
 
@@ -495,11 +512,13 @@
     const inputJa = document.getElementById('inputJa');
     const btnTranslate = document.getElementById('btnTranslate');
     const btnClear = document.getElementById('btnClear');
+    const btnExport = document.getElementById('btnExport');
     const latencyTag = document.getElementById('latencyTag');
     const jaCount = document.getElementById('jaCount');
     const engineBadge = document.getElementById('engineBadge');
     const btnCopyAllJa = document.getElementById('btnCopyAllJa');
     const btnCopyAllVi = document.getElementById('btnCopyAllVi');
+    const micSelect = document.getElementById('micSelect');
 
     async function refreshEngineBadge() {
       try {
@@ -518,6 +537,9 @@
         ws.onopen = () => {
           statusDot.className = 'status-dot connected';
           statusText.innerText = 'Đã kết nối Server';
+          btnMic.disabled = false;
+          btnMic.style.opacity = '1';
+          engineBadge.closest('.status-badge').classList.remove('warning-badge');
           refreshEngineBadge();
         };
 
@@ -534,7 +556,12 @@
 
         ws.onclose = () => {
           statusDot.className = 'status-dot';
-          statusText.innerText = 'Mất kết nối';
+          statusText.innerText = 'Mất kết nối — Đang thử lại...';
+          if (isRecording) stopRecording();
+          btnMic.disabled = true;
+          btnMic.style.opacity = '0.5';
+          engineBadge.closest('.status-badge').classList.add('warning-badge');
+          engineBadge.innerText = 'WS OFFLINE';
           setTimeout(connectWS, 3000);
         };
 
@@ -566,7 +593,7 @@
       jaCard.dataset.item = itemCounter; // real cards carry data-item so copy-all skips system cards
       jaCard.innerHTML = `
         <div class="card-meta"><span>#${itemCounter}</span><span class="meta-right"><span>${now}</span><button class="copy-btn" title="Sao chép">⧉</button></span></div>
-        <div class="card-text ja">${escapeHtml(data.ja_text)}</div>
+        <div class="card-text ja" title="Nhấp đúp để sửa JA">${escapeHtml(data.ja_text)}</div>
       `;
       if (!data.is_final) jaCard.dataset.partialGroup = partialGroup;
       jaList.appendChild(jaCard);
@@ -620,7 +647,6 @@
       if (texts.length) copyText(texts.join('\n'), btn);
     }
 
-    // Event delegation: cards are created dynamically, so listen once per list
     [jaList, viList].forEach(listEl => {
       listEl.addEventListener('click', (e) => {
         const btn = e.target.closest('.copy-btn');
@@ -630,10 +656,66 @@
       });
     });
 
+    // UX3: Double-click to edit JA text and re-translate
+    jaList.addEventListener('dblclick', (e) => {
+      const textNode = e.target.closest('.card-text.ja');
+      if (!textNode || !textNode.closest('.transcript-card').dataset.item) return;
+      textNode.contentEditable = 'true';
+      textNode.focus();
+      document.execCommand('selectAll', false, null);
+    });
+
+    jaList.addEventListener('keydown', async (e) => {
+      const textNode = e.target.closest('.card-text.ja');
+      if (!textNode || textNode.contentEditable !== 'true') return;
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        textNode.contentEditable = 'false';
+        textNode.blur();
+        const newText = textNode.innerText.trim();
+        const itemNum = textNode.closest('.transcript-card').dataset.item;
+        if (!newText || !itemNum) return;
+
+        const viCard = viList.querySelector(`.transcript-card.vi[data-item="${itemNum}"]`);
+        if (viCard) {
+          const viTextNode = viCard.querySelector('.card-text.vi');
+          viTextNode.innerHTML = '<span style="opacity: 0.5;">Đang dịch lại...</span>';
+          try {
+            const res = await fetch('/api/translate', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ text: newText })
+            });
+            const data = await res.json();
+            viTextNode.innerText = data.vi_text;
+            const latencySpan = viCard.querySelector('.card-meta span');
+            if (latencySpan && data.latency_ms) latencySpan.innerText = `Độ trễ: ${data.latency_ms}ms (sửa)`;
+          } catch (err) {
+            viTextNode.innerText = '[Lỗi khi dịch lại]';
+          }
+        }
+      } else if (e.key === 'Escape') {
+        textNode.contentEditable = 'false';
+        textNode.blur();
+      }
+    });
+
+    jaList.addEventListener('blur', (e) => {
+      if (e.target.classList && e.target.classList.contains('ja') && e.target.contentEditable === 'true') {
+        e.target.contentEditable = 'false';
+      }
+    }, true);
+
     async function startRecording() {
       try {
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+          alert('Chưa kết nối Server. Vui lòng đợi.');
+          return;
+        }
         partialGroup++; // new utterance — its partials form a new group
-        mediaStream = await navigator.mediaDevices.getUserMedia({ audio: { sampleRate: 16000, channelCount: 1 } });
+        const constraints = { audio: { sampleRate: 16000, channelCount: 1 } };
+        if (micSelect.value) constraints.audio.deviceId = { exact: micSelect.value };
+        mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
         audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
         const source = audioContext.createMediaStreamSource(mediaStream);
         
@@ -741,6 +823,31 @@
       if (e.key === 'Enter') btnTranslate.click();
     });
 
+    // UX2: Export functionality
+    btnExport.addEventListener('click', () => {
+      const jaCards = [...jaList.querySelectorAll('.transcript-card[data-item]')];
+      const viCards = [...viList.querySelectorAll('.transcript-card[data-item]')];
+      if (jaCards.length === 0) return alert('Không có dữ liệu để xuất.');
+      
+      let out = '# Realtime Translate JP → VN Studio\\n\\n';
+      jaCards.reverse().forEach((jaC) => {
+        const item = jaC.dataset.item;
+        const viC = viCards.find(v => v.dataset.item === item);
+        const jaText = jaC.querySelector('.card-text').innerText;
+        const viText = viC ? viC.querySelector('.card-text').innerText : '';
+        const timeStr = jaC.querySelector('.meta-right span').innerText;
+        out += `## [${timeStr}] #${item}\\n**JA:** ${jaText}\\n**VI:** ${viText}\\n\\n`;
+      });
+      
+      const blob = new Blob([out], { type: 'text/markdown;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `transcript_${new Date().getTime()}.md`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
     btnClear.addEventListener('click', () => {
       jaList.innerHTML = '';
       viList.innerHTML = '';
@@ -752,9 +859,35 @@
     btnCopyAllJa.addEventListener('click', () => copyAllTexts(jaList, btnCopyAllJa));
     btnCopyAllVi.addEventListener('click', () => copyAllTexts(viList, btnCopyAllVi));
 
+    // UX4: Space key to toggle mic
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') {
+        const targetTag = e.target.tagName.toLowerCase();
+        if (targetTag === 'input' || targetTag === 'textarea' || targetTag === 'select' || e.target.isContentEditable) return;
+        e.preventDefault();
+        btnMic.click();
+      }
+    });
+
+    // UX1: Enumerate audio devices
+    async function initAudioDevices() {
+      try {
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const audioInputs = devices.filter(d => d.kind === 'audioinput');
+        if (audioInputs.length > 0) {
+          micSelect.style.display = 'block';
+          micSelect.innerHTML = audioInputs.map(d => `<option value="${d.deviceId}">${d.label || 'Micro ' + d.deviceId.slice(0,4)}</option>`).join('');
+        }
+      } catch (e) {
+        console.warn('Microphone access denied or not available:', e);
+      }
+    }
+
     // Start WebSocket
     connectWS();
     refreshEngineBadge();
+    initAudioDevices();
   </script>
 </body>
 </html>

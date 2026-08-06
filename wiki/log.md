@@ -109,3 +109,8 @@
 
 - UX1 (mic selector), UX2 (export), UX3 (dblclick edit JA -> dịch lại), UX4 (phím space toggle mic), UX5 (offline status/reconnect UI) implemented in `web/index.html`.
 - Plan ticked.
+
+## [2026-08-06] ingest | D-UX Sprint 1 shipped
+
+- UX1 (mic selector), UX2 (export), UX3 (dblclick edit JA -> dịch lại), UX4 (phím space toggle mic), UX5 (offline status/reconnect UI) implemented in `web/index.html`.
+- Plan ticked.
