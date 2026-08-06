@@ -13,15 +13,9 @@ class TranslationResponse(BaseModel):
     ja_text: str
     vi_text: str
     is_final: bool = True
-    confidence: float = 1.0
+    confidence: Optional[float] = None
     latency_ms: float = 0.0
     timestamp: float = Field(default_factory=time.time)
-
-class AudioChunkMessage(BaseModel):
-    event: str = "audio_chunk"  # "audio_chunk", "ping", "stop"
-    audio_base64: Optional[str] = None
-    sample_rate: int = 16000
-    is_final: bool = False
 
 class ServerStatusResponse(BaseModel):
     status: str = "online"

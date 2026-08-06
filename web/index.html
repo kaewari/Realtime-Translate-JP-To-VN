@@ -309,6 +309,64 @@
       font-family: 'JetBrains Mono', monospace;
     }
 
+    .meta-right {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .copy-btn {
+      background: none;
+      border: none;
+      color: var(--text-sub);
+      font-size: 0.85rem;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0 0.25rem;
+      border-radius: 4px;
+      opacity: 0.55;
+      transition: opacity 0.15s, color 0.15s;
+    }
+
+    .copy-btn:hover {
+      opacity: 1;
+      color: var(--accent-cyan);
+    }
+
+    .copy-btn.copied {
+      opacity: 1;
+      color: var(--accent-blue);
+    }
+
+    .panel-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .copy-all-btn {
+      background: none;
+      border: 1px solid var(--panel-border);
+      color: var(--text-sub);
+      border-radius: 8px;
+      padding: 0.3rem 0.7rem;
+      font-family: inherit;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .copy-all-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--accent-cyan);
+    }
+
+    .copy-all-btn.copied {
+      color: var(--accent-blue);
+      border-color: var(--accent-blue);
+    }
+
     .card-text {
       font-size: 1.05rem;
       line-height: 1.5;
@@ -348,6 +406,9 @@
       <div id="statusDot" class="status-dot"></div>
       <span id="statusText">Chưa kết nối</span>
     </div>
+    <div class="status-badge" title="Engine trạng thái (từ /api/status)">
+      <span id="engineBadge">ASR: … · MT: …</span>
+    </div>
   </header>
 
   <main>
@@ -375,7 +436,10 @@
           <div class="panel-title">
             <span class="flag-icon">🇯🇵</span> Tiếng Nhật (ASR Recognition)
           </div>
-          <span id="jaCount" style="font-size: 0.8rem; color: var(--text-sub);">0 câu</span>
+          <div class="panel-actions">
+            <span id="jaCount" style="font-size: 0.8rem; color: var(--text-sub);">0 câu</span>
+            <button id="btnCopyAllJa" class="copy-all-btn" title="Sao chép tất cả">⧉ Copy</button>
+          </div>
         </div>
         <div id="jaList" class="transcript-scroll">
           <div class="transcript-card">
@@ -390,7 +454,10 @@
           <div class="panel-title">
             <span class="flag-icon">🇻🇳</span> Bản Dịch Tiếng Việt (Translation)
           </div>
-          <span id="latencyTag" style="font-size: 0.8rem; color: var(--text-sub); font-family: 'JetBrains Mono', monospace;">0ms</span>
+          <div class="panel-actions">
+            <span id="latencyTag" style="font-size: 0.8rem; color: var(--text-sub); font-family: 'JetBrains Mono', monospace;">0ms</span>
+            <button id="btnCopyAllVi" class="copy-all-btn" title="Sao chép tất cả">⧉ Copy</button>
+          </div>
         </div>
         <div id="viList" class="transcript-scroll">
           <div class="transcript-card vi">
@@ -415,7 +482,7 @@
     let mediaStream = null;
     let scriptProcessor = null;
     let itemCounter = 0;
-    let lastWasPartial = false;
+    let partialGroup = 0;
 
     const btnMic = document.getElementById('btnMic');
     const micText = document.getElementById('micText');
@@ -430,6 +497,19 @@
     const btnClear = document.getElementById('btnClear');
     const latencyTag = document.getElementById('latencyTag');
     const jaCount = document.getElementById('jaCount');
+    const engineBadge = document.getElementById('engineBadge');
+    const btnCopyAllJa = document.getElementById('btnCopyAllJa');
+    const btnCopyAllVi = document.getElementById('btnCopyAllVi');
+
+    async function refreshEngineBadge() {
+      try {
+        const res = await fetch('/api/status');
+        const data = await res.json();
+        engineBadge.innerText = `ASR: ${data.asr_engine} · MT: ${data.mt_engine}`;
+      } catch (e) {
+        // server unreachable — keep last value
+      }
+    }
 
     function connectWS() {
       try {
@@ -438,6 +518,7 @@
         ws.onopen = () => {
           statusDot.className = 'status-dot connected';
           statusText.innerText = 'Đã kết nối Server';
+          refreshEngineBadge();
         };
 
         ws.onmessage = (event) => {
@@ -466,38 +547,40 @@
     }
 
     function addTranslationResult(data) {
-      itemCounter++;
-      jaCount.innerText = `${itemCounter} câu`;
+      const now = new Date().toLocaleTimeString();
+
+      // Final marker: remove ALL partial cards of this utterance group, then append one final card
+      if (data.is_final) {
+        jaList.querySelectorAll(`[data-partial-group="${partialGroup}"]`).forEach(c => c.remove());
+        viList.querySelectorAll(`[data-partial-group="${partialGroup}"]`).forEach(c => c.remove());
+        itemCounter++;
+        jaCount.innerText = `${itemCounter} câu`;
+      }
       if (data.latency_ms) {
         latencyTag.innerText = `${data.latency_ms}ms`;
       }
 
-      const now = new Date().toLocaleTimeString();
-
-      // A final marker after partials finalizes the last card — replace it, don't duplicate
-      if (data.is_final && lastWasPartial) {
-        jaList.querySelectorAll('.transcript-card:not(:first-child)').item(-1)?.remove();
-        viList.querySelectorAll('.transcript-card:not(:first-child)').item(-1)?.remove();
-      }
-      lastWasPartial = !data.is_final;
-
       // JA Card
       const jaCard = document.createElement('div');
       jaCard.className = 'transcript-card';
+      jaCard.dataset.item = itemCounter; // real cards carry data-item so copy-all skips system cards
       jaCard.innerHTML = `
-        <div class="card-meta"><span>#${itemCounter}</span><span>${now}</span></div>
+        <div class="card-meta"><span>#${itemCounter}</span><span class="meta-right"><span>${now}</span><button class="copy-btn" title="Sao chép">⧉</button></span></div>
         <div class="card-text ja">${escapeHtml(data.ja_text)}</div>
       `;
+      if (!data.is_final) jaCard.dataset.partialGroup = partialGroup;
       jaList.appendChild(jaCard);
       jaList.scrollTop = jaList.scrollHeight;
 
       // VI Card
       const viCard = document.createElement('div');
       viCard.className = 'transcript-card vi';
+      viCard.dataset.item = itemCounter;
       viCard.innerHTML = `
-        <div class="card-meta"><span>Độ trễ: ${data.latency_ms || 0}ms</span><span>${now}</span></div>
+        <div class="card-meta"><span>Độ trễ: ${data.latency_ms || 0}ms</span><span class="meta-right"><span>${now}</span><button class="copy-btn" title="Sao chép">⧉</button></span></div>
         <div class="card-text vi">${escapeHtml(data.vi_text)}</div>
       `;
+      if (!data.is_final) viCard.dataset.partialGroup = partialGroup;
       viList.appendChild(viCard);
       viList.scrollTop = viList.scrollHeight;
     }
@@ -506,8 +589,50 @@
       return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
 
+    async function copyText(text, btn) {
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          // Localhost counts as secure, but fall back for file:// or old browsers
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          ta.remove();
+        }
+        const orig = btn.innerHTML;
+        btn.textContent = '✓';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('copied'); }, 1500);
+      } catch (e) {
+        console.error('Copy failed:', e);
+      }
+    }
+
+    function copyAllTexts(listEl, btn) {
+      const texts = [...listEl.querySelectorAll('.transcript-card[data-item] .card-text')]
+        .map(el => el.innerText)
+        .filter(Boolean);
+      if (texts.length) copyText(texts.join('\n'), btn);
+    }
+
+    // Event delegation: cards are created dynamically, so listen once per list
+    [jaList, viList].forEach(listEl => {
+      listEl.addEventListener('click', (e) => {
+        const btn = e.target.closest('.copy-btn');
+        if (!btn) return;
+        const text = btn.closest('.transcript-card').querySelector('.card-text').innerText;
+        copyText(text, btn);
+      });
+    });
+
     async function startRecording() {
       try {
+        partialGroup++; // new utterance — its partials form a new group
         mediaStream = await navigator.mediaDevices.getUserMedia({ audio: { sampleRate: 16000, channelCount: 1 } });
         audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
         const source = audioContext.createMediaStreamSource(mediaStream);
@@ -545,13 +670,21 @@
             ws.send(JSON.stringify({
               event: 'audio_chunk',
               audio_base64: base64Audio,
-              is_final: false
+              is_final: false,
+              sample_rate: audioContext.sampleRate
             }));
           }
         };
 
         source.connect(scriptProcessor);
-        scriptProcessor.connect(audioContext.destination);
+
+        // Muted gain in the signal path: the script processor needs a graph
+        // connection to keep onaudioprocess firing, but zero gain means the
+        // mic never reaches the speakers (feedback loop).
+        const muteGain = audioContext.createGain();
+        muteGain.gain.value = 0;
+        scriptProcessor.connect(muteGain);
+        muteGain.connect(audioContext.destination);
 
         isRecording = true;
         btnMic.className = 'btn-mic recording';
@@ -569,7 +702,7 @@
 
       // Tell the server the utterance is done so it finalizes the last partial
       if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ event: 'audio_chunk', audio_base64: '', is_final: true }));
+        ws.send(JSON.stringify({ event: 'audio_chunk', audio_base64: '', is_final: true, sample_rate: audioContext.sampleRate }));
       }
 
       if (scriptProcessor) scriptProcessor.disconnect();
@@ -595,7 +728,7 @@
     btnTranslate.addEventListener('click', () => {
       const text = inputJa.value.trim();
       if (!text) return;
-      lastWasPartial = false; // new utterance — its final response must append, not replace
+      partialGroup++; // new utterance — its partials form a new group
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ event: 'text', text: text }));
         inputJa.value = '';
@@ -616,8 +749,12 @@
       latencyTag.innerText = '0ms';
     });
 
+    btnCopyAllJa.addEventListener('click', () => copyAllTexts(jaList, btnCopyAllJa));
+    btnCopyAllVi.addEventListener('click', () => copyAllTexts(viList, btnCopyAllVi));
+
     // Start WebSocket
     connectWS();
+    refreshEngineBadge();
   </script>
 </body>
 </html>

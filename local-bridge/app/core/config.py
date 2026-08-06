@@ -10,10 +10,8 @@ class AppConfig(BaseModel):
     sample_rate: int = 16000
     channels: int = 1
     sample_width: int = 2  # 16-bit PCM
-    chunk_duration_sec: float = 1.0  # 1s chunk default
     window_duration_sec: float = 3.0  # sliding window for ASR
-    min_speech_duration_sec: float = 0.5
-    
+
     # VAD config
     vad_energy_threshold: float = 0.015  # RMS threshold for energy VAD
     vad_enabled: bool = True

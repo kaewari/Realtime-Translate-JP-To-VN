@@ -23,26 +23,4 @@ class VADService:
         rms = np.sqrt(np.mean(np.square(audio_data)))
         return bool(rms >= self.threshold)
 
-    def filter_silence(self, audio_data: np.ndarray, frame_duration_ms: int = 30, sample_rate: int = 16000) -> np.ndarray:
-        """Filter out non-speech frames from an audio array."""
-        if len(audio_data) == 0:
-            return audio_data
-            
-        frame_size = int(sample_rate * (frame_duration_ms / 1000.0))
-        if frame_size <= 0:
-            return audio_data
-            
-        speech_frames = []
-        for i in range(0, len(audio_data), frame_size):
-            chunk = audio_data[i:i + frame_size]
-            if len(chunk) < frame_size / 2:
-                continue
-            if self.is_speech(chunk, sample_rate):
-                speech_frames.append(chunk)
-                
-        if not speech_frames:
-            return np.array([], dtype=np.float32)
-            
-        return np.concatenate(speech_frames)
-
 vad_service = VADService()

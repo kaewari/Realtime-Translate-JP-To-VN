@@ -16,10 +16,10 @@ app = FastAPI(
 )
 
 # Enable CORS for local web interface & extensions
+# allow_origins=["*"] + allow_credentials là combo vô hiệu — bỏ credentials
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )

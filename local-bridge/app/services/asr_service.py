@@ -8,6 +8,7 @@ class ASRService:
     def __init__(self):
         self.pipe = None
         self.is_loaded = False
+        self.load_failed = False
         self.engine_name = "Whisper (Pending)"
 
     def load_model(self):
@@ -15,23 +16,27 @@ class ASRService:
         if self.is_loaded:
             return True
         try:
-            from transformers import pipeline
-            import torch
+            import mlx_whisper
+
+            model_name = config.asr_model_name
+            # If using standard openai model, map to mlx-community for speed
+            if model_name == "openai/whisper-small":
+                model_name = "mlx-community/whisper-small-mlx"
+
+            self.pipe = mlx_whisper
+            self.model_path = model_name
             
-            device = 0 if (config.asr_device == "mps" and torch.backends.mps.is_available()) else -1
-            self.pipe = pipeline(
-                "automatic-speech-recognition",
-                model=config.asr_model_name,
-                device=device,
-                generate_kwargs={"language": config.asr_language, "task": "transcribe"}
-            )
+            # Warmup to cache weights
+            self.pipe.transcribe(np.zeros(16000, dtype=np.float32), path_or_hf_repo=self.model_path)
+            
             self.is_loaded = True
-            self.engine_name = f"transformers-{config.asr_model_name}"
+            self.engine_name = f"mlx-{model_name.split('/')[-1]}"
             return True
         except Exception as e:
             log_warning(f"Could not initialize ASR model '{config.asr_model_name}': {e}. Using fallback/mock ASR.")
             self.is_loaded = False
-            self.engine_name = "fallback-asr"
+            self.load_failed = True  # never retry — retrying per window spams errors.log
+            self.engine_name = "fallback-asr (load failed)"
             return False
 
     def transcribe(self, audio_data: np.ndarray, sample_rate: int = 16000) -> Dict[str, Any]:
@@ -39,8 +44,8 @@ class ASRService:
         if audio_data is None or len(audio_data) == 0:
             return {"text": "", "confidence": 0.0}
 
-        # Lazy load if needed
-        if not self.is_loaded and self.pipe is None:
+        # Lazy load if needed — skip retry once a load attempt has failed
+        if not self.is_loaded and not self.load_failed:
             self.load_model()
 
         if self.is_loaded and self.pipe:
@@ -48,9 +53,14 @@ class ASRService:
                 # Ensure float32 array
                 if audio_data.dtype != np.float32:
                     audio_data = audio_data.astype(np.float32)
-                res = self.pipe({"sampling_rate": sample_rate, "raw": audio_data})
+                res = self.pipe.transcribe(
+                    audio_data,
+                    path_or_hf_repo=self.model_path,
+                    language=config.asr_language,
+                    task="transcribe"
+                )
                 text = res.get("text", "").strip()
-                return {"text": text, "confidence": 0.95}
+                return {"text": text, "confidence": None}
             except Exception as e:
                 log_error(f"ASR transcribe error: {e}")
 
@@ -60,6 +70,6 @@ class ASRService:
             return {"text": "", "confidence": 0.0}
 
         # Safe placeholder phrase for active audio chunks in local dev when model not downloaded yet
-        return {"text": "こんにちは、リアルタイム翻訳テストです。", "confidence": 0.8}
+        return {"text": "こんにちは、リアルタイム翻訳テストです。", "confidence": None}
 
 asr_service = ASRService()

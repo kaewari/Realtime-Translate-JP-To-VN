@@ -62,12 +62,12 @@ plan/ review/       # plan/review file (bất biến, wiki là tổng hợp số
 |---|---|---|
 | 1 | PoC nhanh — thu micro → ASR → dịch → in text | ✅ done |
 | 2 | Near real-time — VAD, chunking, sentence buffer | ✅ done |
-| 3 | UI — start/stop, hiển thị JA + VI, timestamp | ✅ done (thiếu nút copy text) |
-| 4 | Tối ưu hiệu năng — Metal/quantization (whisper.cpp/MLX) | ⏳ future |
+| 3 | UI — start/stop, hiển thị JA + VI, timestamp, nút copy | ✅ done |
+| 4 | Tối ưu hiệu năng — Metal/quantization (whisper.cpp/MLX) | ✅ done 2026-08-06 (mlx-whisper, ~63ms/window) |
 
 Chi tiết: `plan/plan-2026-08-05-realtime-translate-jp-to-vn.md`.
 
 ## Docs khác
 
-- `walkthrough.md` — kiến trúc audio pipeline + hướng dẫn chạy (đang skeleton)
+- `walkthrough.md` — kiến trúc audio pipeline + hướng dẫn chạy (đầy đủ)
 - `AGENTS.md` — quy ước bắt buộc cho mọi agent (ponytail, plan/review, wiki, skills)

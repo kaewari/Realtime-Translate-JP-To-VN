@@ -64,6 +64,23 @@ Header:
 
 ---
 
+## 1a. Git branches (mọi agent)
+
+| Khi | Branch | Việc |
+|-----|--------|------|
+| Agent bắt đầu code | `{agent}/dev` | Tạo/checkout branch tên agent + `/dev`. Ví dụ: `cursor/dev`, `claude/dev`, `deepseek/dev`, `antigravity/dev`. |
+| Plan phase của agent xong | cùng `{agent}/dev` | Commit + **push** branch đó lên remote. |
+| **Plan tổng** (A+B+C / mọi phase living) xong | `master` | Merge/ff `{agent}/dev` → `master`, **push `master`**, rồi **sync mọi `*/dev`** về cùng commit với `master` (ff hoặc reset cứng local branch về `master` rồi push). |
+
+Quy tắc:
+
+- Tên agent = chữ thường, không dấu: `cursor`, `claude`, `deepseek`, `antigravity`, … (free-claude-code → `claude` hoặc `deepseek` tùy model backend đang dùng — ghi rõ trong commit message).
+- Không commit trực tiếp lên `master` khi đang làm dở phase; chỉ lên `master` khi plan tổng đóng.
+- Trước push: không `--force` lên `master`. Sync `*/dev` sau khi `master` đã cập nhật: `git branch -f <agent>/dev master` rồi `git push -u origin <agent>/dev` (force-with-lease chỉ trên `*/dev` nếu remote lệch và user đồng ý).
+- Chưa có `origin`: vẫn tạo/commit/sync local; báo user thêm remote rồi push.
+
+---
+
 ## 2. Verify live code (cache ≠ disk)
 
 Especially DeepSeek / review / bugfix: index or chat cache can disagree with files on disk.

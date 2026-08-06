@@ -63,9 +63,10 @@ class TranslationService:
         if not text:
             return ""
 
-        # Check fallback dictionary for exact match
-        if text in self.dict_ja_vi:
-            return self.dict_ja_vi[text]
+        # Check fallback dictionary for exact match (strip trailing JA punctuation first)
+        key = text.rstrip("。、！？").strip()
+        if key in self.dict_ja_vi:
+            return self.dict_ja_vi[key]
 
         # Try Hugging Face MarianMT if available or loadable
         if not self.is_loaded:
