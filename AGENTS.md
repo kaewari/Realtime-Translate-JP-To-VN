@@ -210,3 +210,5 @@ When you add a user-facing feature, update both `walkthrough.md` (what was added
 | Codegraph index | `.codegraph/` | Không (local; skill hướng dẫn dùng) |
 
 Khớp bảng trước khi tạo docs/dataset; không invent top-level folder; runtime data ≠ wiki; lint wiki bắt file mồ côi.
+
+**Gitignore — không commit thì phải ignore:** mọi path trong bảng có **GitHub? = Không**, cộng secrets (`.env`, TLS key/cert, credentials), runtime/generated, build artifacts, và evidence tạm — **phải có pattern trong `.gitignore`**. Khi tạo path/loại file mới không lên GitHub: thêm ignore **cùng change** với việc tạo path đó. Không `git add -f` các path đó trừ khi user yêu cầu rõ. Nếu `git status` hiện `??` cho thứ thuộc bảng Không → sửa `.gitignore` (thường cần `/**` cho nested), đừng commit.
