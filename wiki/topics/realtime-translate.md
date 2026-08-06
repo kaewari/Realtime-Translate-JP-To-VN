@@ -1,7 +1,7 @@
 # Topic: Realtime Translate JP To VN
 
 ## Status
-MVP Ready · Phase A+B+C closed · **Utterance endpointing implemented 2026-08-06** (DeepSeek, [`utterance-end/dev`] → merged `deepseek/dev`) — chờ Cursor verify ([plan](../plan/plan-2026-08-06-utterance-endpointing.md)). mlx ~65.7ms.
+MVP Ready · A+B+C closed · utterance-end **verified Cursor 2026-08-06** (`3393934` / `deepseek/dev`) · **D-UI + D-UX open** ([ui-visual](../plan/plan-2026-08-06-ui-visual.md) · [ux-interaction](../plan/plan-2026-08-06-ux-interaction.md)) — Gemini 3.1 Pro High / Antigravity. mlx ~65.7ms.
 
 ## Verified on real hardware (2026-08-06)
 - 7/7 unit tests pass (`python3 -m unittest discover -s tests`)
@@ -46,7 +46,7 @@ MVP Ready · Phase A+B+C closed · **Utterance endpointing implemented 2026-08-0
 
 ## Open gaps
 - **Latency ASR**: Phase C **closed** — ~65.7ms/window (mlx); xem [plan C](../plan/plan-2026-08-06-phase4-latency.md).
-- **Utterance jump / mid-sentence ASR**: **fixed 2026-08-06** — `pop_utterance` silence endpointing (0.6s/8.0s/0.4s) thay greedy `get_window` [utterance-endpointing](../plan/plan-2026-08-06-utterance-endpointing.md); chờ Cursor verify.
+- **Utterance jump / mid-sentence ASR**: **verified closed 2026-08-06** — `pop_utterance` silence endpointing (0.6s/8.0s/0.4s) thay greedy `get_window` [utterance-endpointing](../plan/plan-2026-08-06-utterance-endpointing.md); Cursor disk + 11/11 tests.
 - Copy text: **đã đóng** bởi B1 (per card + copy all).
 
 ## System Overview
@@ -63,7 +63,7 @@ Hệ thống dịch tiếng Nhật sang tiếng Việt thời gian thực (near 
 - **Test Suite**: [test_pipeline.py](file:///Users/hoangson/Documents/Realtime%20Translate%20JP%20To%20VN/local-bridge/tests/test_pipeline.py)
 
 ## Raw Sources
-- Plan (active utterance-end): [plan-2026-08-06-utterance-endpointing.md](file:///Users/hoangson/Documents/Realtime%20Translate%20JP%20To%20VN/plan/plan-2026-08-06-utterance-endpointing.md)
+- Plan (closed utterance-end, verified Cursor): [plan-2026-08-06-utterance-endpointing.md](file:///Users/hoangson/Documents/Realtime%20Translate%20JP%20To%20VN/plan/plan-2026-08-06-utterance-endpointing.md)
 - Plan (closed A/B): [plan-2026-08-06-bugfix-phase-a-b.md](file:///Users/hoangson/Documents/Realtime%20Translate%20JP%20To%20VN/plan/plan-2026-08-06-bugfix-phase-a-b.md)
 - Plan (active C living): [plan-2026-08-06-phase4-latency.md](file:///Users/hoangson/Documents/Realtime%20Translate%20JP%20To%20VN/plan/plan-2026-08-06-phase4-latency.md)
 - Plan (Continue C snapshot): [plan-2026-08-06-continue-phase-c.md](file:///Users/hoangson/Documents/Realtime%20Translate%20JP%20To%20VN/plan/plan-2026-08-06-continue-phase-c.md)

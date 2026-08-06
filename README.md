@@ -62,7 +62,7 @@ plan/ review/       # plan/review file (bất biến, wiki là tổng hợp số
 |---|---|---|
 | 1 | PoC nhanh — thu micro → ASR → dịch → in text | ✅ done |
 | 2 | Near real-time — VAD, chunking, sentence buffer | ✅ done |
-| 3 | UI — start/stop, hiển thị JA + VI, timestamp, nút copy | ✅ done |
+| 3 | UI/UX — hiển thị JA+VI, nút export, mic selector, phím Space toggle, sửa JA dịch lại | ✅ done (D-UX Sprint 1) |
 | 4 | Tối ưu hiệu năng — Metal/quantization (whisper.cpp/MLX) | ✅ done 2026-08-06 (mlx-whisper, ~63ms/window) |
 
 Chi tiết: `plan/plan-2026-08-05-realtime-translate-jp-to-vn.md`.

@@ -62,7 +62,7 @@ Config ([`config.py`](../local-bridge/app/core/config.py)):
 
 ## Mốc
 
-- [x] Plan đóng — ngày: 2026-08-06 · verified Cursor: ____
+- [x] Plan đóng — ngày: 2026-08-06 · verified Cursor: 2026-08-06 (disk: `pop_utterance` + config 3 field + WS wire; `get_window` gone; 11/11 unittest OK; SHA `3393934` trên `deepseek/dev`)
 
 ## Out of scope
 

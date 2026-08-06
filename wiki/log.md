@@ -1,5 +1,10 @@
 # Wiki Log
 
+## [2026-08-06] verify | Utterance endpointing — Cursor disk OK
+
+- User: DeepSeek đã fix xong. Disk: `audio_buffer.pop_utterance` + config 3 field + WS `pop_utterance(flush=is_final)`; không còn `get_window` / `window_duration_sec`.
+- Suite: 11/11 OK (~2.3s). Plan mốc verified Cursor. SHA `3393934` trên `deepseek/dev` (+ `antigravity/dev`, `ux-core/dev`). Task branch `utterance-end/dev` đã xóa. Chưa lên `master` (đúng §1a — chưa đóng plan tổng mới).
+
 ## [2026-08-06] implement | Utterance endpointing — DeepSeek (`deepseek/dev`)
 
 - `pop_utterance()` thay `get_window`: emit khi silence ≥ 0.6s sau speech ≥ 0.4s, hoặc buffer ≥ 8s, hoặc flush. Config 3 field mới. WS `is_final` → flush.
@@ -99,3 +104,8 @@
 - A1 to_thread (P0 event-loop blocking); A2 partial-group dọn card; A3 GainNode 0 hết feedback; A4 sample_rate contract + numpy resample 16k (smoke 48k: 1 WARNING/session); A5 load_failed + engine badge; A6 dead code + confidence Optional + dict strip dấu câu.
 - Smoke: /health 3ms khi WS transcribe; 48k chunk → pipeline vẫn trả kết quả. 7/7 tests pass (25.5s).
 - Plan ticked A1–A6 + mốc Phase A `2026-08-06 · verified Cursor/Bugbot: ____`. Gate Phase B chờ user chạy Cursor/Bugbot verify A.
+
+## [2026-08-06] ingest | D-UX Sprint 1 shipped
+
+- UX1 (mic selector), UX2 (export), UX3 (dblclick edit JA -> dịch lại), UX4 (phím space toggle mic), UX5 (offline status/reconnect UI) implemented in `web/index.html`.
+- Plan ticked.
