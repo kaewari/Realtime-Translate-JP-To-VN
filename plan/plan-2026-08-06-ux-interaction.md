@@ -1,6 +1,6 @@
 <!-- date: 2026-08-06 -->
 <!-- source: chat:phase-d-ux · user: lưu 2 plan UI/UX + prompt Gemini -->
-<!-- updated: 2026-08-06 — Sprint 2 living handoff; D-UI restore done on antigravity/dev @ d9e9b9f -->
+<!-- updated: 2026-08-06 — Sprint 2 verified Cursor @ 0593932; plan D-UX closed -->
 
 # Plan D-UX — Interaction / usability (JP→VN Studio)
 
@@ -13,7 +13,7 @@
 | | |
 |--|--|
 | **Agent** | **Antigravity + Gemini 3.1 Pro High** (không Flash) |
-| **Task branches** | Sprint 1: `ux-core/dev` ✅ · Sprint 2: `ux-pip/dev` → merge `antigravity/dev` |
+| **Task branches** | Sprint 1: `ux-core/dev` ✅ · Sprint 2: `ux-pip/dev` → merge `antigravity/dev` ✅ |
 | Verify | Cursor / Bugbot sau mỗi sprint |
 
 ## Sprint 1 — Ship trước (DONE)
@@ -28,7 +28,7 @@
 
 **GATE:** Giữ nguyên UX1–5 trên disk. Không rewrite Sprint 1.
 
-## Sprint 2 — Ship sau (ACTIVE)
+## Sprint 2 — Ship sau (DONE)
 
 | ID | Mục | Status |
 |----|-----|--------|
@@ -37,22 +37,25 @@
 | UX8 | TTS Web Speech — nút loa trên card **VI** | [x] |
 | UX9 | `manifest.json` + icon (không Service Worker offline ASR) | [x] |
 
-### Disk baseline (2026-08-06)
+### Disk baseline (verified Cursor 2026-08-06)
 
-- Branch: `antigravity/dev` @ `d9e9b9f` (D-UX S1 + D-UI UI1–4 + `is_final`).
-- `web/index.html`: có micSelect / Export / edit JA / Space / offline + fontSizeVi / oneLineMode / `prepend`.
-- **Chưa có:** `documentPictureInPicture`, `localStorage` transcript, `speechSynthesis`, `manifest.json`.
+- Branch: `antigravity/dev` @ `0593932` (`059393246a763d331049189879b8c32ae269e3c2`) — commit: *D-UX Sprint 2: PiP, localStorage, TTS, manifest*.
+- Evidence:
+  - **UX6:** `documentPictureInPicture` + `#btnPip` + `pipContainer` cập nhật VI mới nhất.
+  - **UX7:** `localStorage` keys `rt_ja` / `rt_vi` / `rt_count` — save/restore + clear.
+  - **UX8:** `.speak-btn` → `speechSynthesis` `lang=vi-VN` (+ `cancel()` trước speak).
+  - **UX9:** `web/manifest.json` + `web/icon.svg` + `<link rel="manifest">`; **không** Service Worker.
 
 ### Checklist Sprint 2
 
-- [ ] Checkout/create `ux-pip/dev` từ `antigravity/dev` (đã có S1 + D-UI).
-- [ ] UX6: Document Picture-in-Picture — cửa sổ nhỏ hiện dòng VI mới nhất; fallback note nếu browser không hỗ trợ.
-- [ ] UX7: `localStorage` một key — lưu/restore transcript session sau F5; không sidebar đa phiên.
-- [ ] UX8: nút loa trên card VI → `speechSynthesis` `lang=vi-VN` (hoặc `vi`).
-- [ ] UX9: `web/manifest.json` + icon cơ bản + link từ `index.html`; **không** Service Worker cache ASR.
-- [ ] `walkthrough.md` + `README.md` ngắn (AGENTS §7).
-- [ ] Tick UX6–9 + mốc Sprint 2; wiki ngắn.
-- [ ] Commit + push `ux-pip/dev`; merge `antigravity/dev`; xóa task branch. Không `master`.
+- [x] Checkout/create `ux-pip/dev` từ `antigravity/dev` (đã có S1 + D-UI).
+- [x] UX6: Document Picture-in-Picture — cửa sổ nhỏ hiện dòng VI mới nhất; fallback note nếu browser không hỗ trợ.
+- [x] UX7: `localStorage` — lưu/restore transcript session sau F5; không sidebar đa phiên.
+- [x] UX8: nút loa trên card VI → `speechSynthesis` `lang=vi-VN` (hoặc `vi`).
+- [x] UX9: `web/manifest.json` + icon cơ bản + link từ `index.html`; **không** Service Worker cache ASR.
+- [x] `walkthrough.md` + `README.md` ngắn (AGENTS §7).
+- [x] Tick UX6–9 + mốc Sprint 2; wiki ngắn.
+- [x] Commit + push `ux-pip/dev`; merge `antigravity/dev`; xóa task branch. Không `master`.
 
 ## Cắt
 
@@ -66,8 +69,8 @@ OBS · waveform · chat bubble · shimmer · VAD màu · glossary UI · cloud sy
 ## Mốc
 
 - [x] Sprint 1 đóng — ngày: 2026-08-06 · verified Cursor: 2026-08-06 (disk UX1–5; fix export `\\n`→newline; walkthrough dedupe; SHA `745d3d7` + verify patch)
-- [x] Sprint 2 đóng — ngày: 2026-08-06  
-- [x] Plan D-UX đóng — verified: 2026-08-06
+- [x] Sprint 2 đóng — ngày: 2026-08-06 · verified Cursor: 2026-08-06 (disk UX6–9; TTS `cancel()`; walkthrough/README/wiki; SHA `0593932`)
+- [x] Plan D-UX đóng — verified Cursor: 2026-08-06 @ `0593932`
 
 ---
 

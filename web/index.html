@@ -752,6 +752,7 @@
           if ('speechSynthesis' in window) {
             const msg = new SpeechSynthesisUtterance(text);
             msg.lang = 'vi-VN';
+            window.speechSynthesis.cancel();
             window.speechSynthesis.speak(msg);
           }
         }

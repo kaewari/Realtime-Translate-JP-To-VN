@@ -4,6 +4,19 @@ from typing import Dict, Any, Optional
 from app.core.config import config
 from app.utils.logger import log_error, log_warning
 
+# Whisper often invents these on silence / trailing noise (classic YouTube outro).
+_WHISPER_JUNK = frozenset({
+    "ご視聴ありがとうございました",
+    "ご視聴ありがとう",
+    "thanksforwatching",
+})
+
+
+def _filter_whisper_junk(text: str) -> str:
+    compact = "".join(text.split()).strip("。．.!！?？").lower()
+    return "" if compact in _WHISPER_JUNK else text.strip()
+
+
 class ASRService:
     def __init__(self):
         self.pipe = None
@@ -59,7 +72,7 @@ class ASRService:
                     language=config.asr_language,
                     task="transcribe"
                 )
-                text = res.get("text", "").strip()
+                text = _filter_whisper_junk(res.get("text", ""))
                 return {"text": text, "confidence": None}
             except Exception as e:
                 log_error(f"ASR transcribe error: {e}")

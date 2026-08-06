@@ -18,7 +18,9 @@ Realtime Translate JP To VN/
 │   ├── requirements.txt    # Package dependencies
 │   └── errors.log          # Runtime & error log file
 ├── web/
-│   └── index.html          # Modern Web Studio UI (Dark Mode, Web Audio API, WebSocket)
+│   ├── index.html          # Modern Web Studio UI (Dark Mode, Web Audio API, WebSocket)
+│   ├── manifest.json       # PWA lite (standalone; no Service Worker)
+│   └── icon.svg            # App icon
 ├── plan/                   # Active implementation plans
 ├── wiki/                   # LLM wiki
 └── walkthrough.md          # Realtime pipeline walkthrough & test documentation
@@ -72,6 +74,13 @@ Toàn bộ 7 bài test đã chạy thành công trong 5.038s (`python3 -m unitte
 - **UX4 (Phím tắt Space):** Hỗ trợ dùng phím Space (dấu cách) để bật/tắt nhanh microphone. Tự động bỏ qua khi người dùng đang gõ phím vào ô input/textarea.
 - **UX5 (Xử lý Offline):** Cải thiện trải nghiệm khi mất kết nối WebSocket. Tự động dừng thu âm, khoá nút thu âm và hiển thị trạng thái đang thử kết nối lại một cách rõ ràng.
 
+## Tính năng mới (D-UX Sprint 2)
+
+- **UX6 (PiP):** Nút **PiP** (Chrome/Edge hỗ trợ Document Picture-in-Picture) mở cửa sổ phụ đề VN nổi; cập nhật khi có dòng VI mới. Browser không hỗ trợ → nút ẩn.
+- **UX7 (Restore session):** Transcript JA+VI lưu `localStorage` — F5 khôi phục; không sidebar đa phiên.
+- **UX8 (TTS):** Nút 🔊 trên card VI → Web Speech `vi-VN` (cancel utterance trước khi đọc mới).
+- **UX9 (PWA lite):** `web/manifest.json` + `icon.svg` — cài như app standalone; **không** Service Worker / offline ASR.
+
 ## Hướng dẫn chạy thử
 
 1. Cài dependencies (⚠️ `scipy==1.14.1` + `sentencepiece` bắt buộc — thiếu sentencepiece → MarianMT fail âm thầm, VI hiện `[Dịch: …]`; scipy≥1.15 fail dyld trên macOS 27 + Python 3.10 → ASR fallback mock):
@@ -93,3 +102,4 @@ Toàn bộ 7 bài test đã chạy thành công trong 5.038s (`python3 -m unitte
    - Dịch thử vài câu, nhấn nút **Export** để tải file transcript (UX2).
    - Nhấp đúp vào thẻ kết quả tiếng Nhật, sửa văn bản và nhấn Enter để dịch lại (UX3).
    - Đóng tiến trình server terminal để thử giao diện báo mất kết nối và dừng thu âm (UX5).
+   - Nút **PiP** (nếu hiện) → cửa sổ phụ đề VN (UX6); F5 khôi phục transcript (UX7); 🔊 trên card VI (UX8).

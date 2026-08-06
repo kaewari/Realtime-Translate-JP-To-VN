@@ -122,6 +122,18 @@ class TestLocalBridgePipeline(unittest.TestCase):
         self.assertEqual(fake.kwargs["language"], config.asr_language)
         self.assertEqual(fake.kwargs["task"], "transcribe")
 
+    def test_asr_filters_whisper_junk(self):
+        """Whisper end-of-audio hallucination must become empty (no card on mic stop)."""
+        class FakePipe:
+            def transcribe(self, audio, **kwargs):
+                return {"text": " ご視聴ありがとうございました。 "}
+        self.asr.pipe = FakePipe()
+        self.asr.is_loaded = True
+        self.asr.model_path = "mock"
+        signal = np.zeros(16000, dtype=np.float32)
+        res = self.asr.transcribe(signal, 16000)
+        self.assertEqual(res["text"], "")
+
     @unittest.skipUnless(
         FIXTURE_KONNICHIWA.exists(),
         "missing testdata/audio/konnichiwa-16k.wav (gitignored) — regenerate with 'say -v Kyoko -r 160 こんにちは' + ffmpeg 16k mono"

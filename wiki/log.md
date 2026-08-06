@@ -1,5 +1,11 @@
 # Wiki Log
 
+## [2026-08-06] verify | D-UX Sprint 2 — Cursor disk OK · plan D-UX closed
+
+- Disk `antigravity/dev` @ `0593932`: UX6 PiP (`documentPictureInPicture` + `#btnPip`), UX7 localStorage `rt_*`, UX8 `.speak-btn` + `speechSynthesis` (+ verify patch `cancel()`), UX9 `manifest.json` + `icon.svg` (no SW).
+- Living plan checklist/mốc ticked; wiki Active + topic gaps → D-UX closed; walkthrough/README Sprint 2.
+- Không push `master`.
+
 ## [2026-08-06] verify+ingest | D-UI restore done · D-UX Sprint 2 plan refresh
 
 - Disk `antigravity/dev` @ `d9e9b9f`: UI1 fontSizeVi, UI2 oneLineMode, UI4 prepend, `endpoints.py` is_final=True — restore D-UI **Y**.
