@@ -1,12 +1,12 @@
 <!-- date: 2026-08-06 -->
 <!-- source: chat:phase-d-ui · user: lưu 2 plan UI/UX + prompt Gemini -->
-<!-- updated: 2026-08-06 — lost from antigravity/dev; restore via plan-2026-08-06-restore-d-ui.md -->
+<!-- updated: 2026-08-06 — restored onto antigravity/dev @ d9e9b9f (was lost; via restore-d-ui) -->
 
 # Plan D-UI — Visual / layout (JP→VN Studio)
 
 > Tách từ `plan/plan-2026-08-06-ui-ux-enhancements.md` (đề xuất Pro Max — tham khảo; sprint theo file này).  
 > Sibling UX: [`plan-2026-08-06-ux-interaction.md`](plan-2026-08-06-ux-interaction.md).  
-> **Restore living:** [`plan-2026-08-06-restore-d-ui.md`](plan-2026-08-06-restore-d-ui.md) — commit `c0bb784` lệch nhánh, HEAD thiếu UI1–3 + prepend.
+> **Restore:** [`plan-2026-08-06-restore-d-ui.md`](plan-2026-08-06-restore-d-ui.md) — **đóng** trên `antigravity/dev` @ `d9e9b9f`.
 
 ## Executor
 
@@ -38,8 +38,8 @@ Mic, export, edit, hotkeys, PiP, TTS, PWA, localStorage → D-UX.
 
 ## Mốc
 
-- [ ] D-UI trên `antigravity/dev` — ngày: ____ · verified Cursor: ____  
-  (commit `c0bb784` từng claim verified antigravity nhưng **không** nằm trên agent branch hiện tại)
+- [x] D-UI trên `antigravity/dev` — ngày: 2026-08-06 · verified Cursor: 2026-08-06  
+  (SHA `885c2bc` UI1–3 + `d9e9b9f` UI4 prepend / is_final / MT badge — restore plan đóng)
 
 ---
 

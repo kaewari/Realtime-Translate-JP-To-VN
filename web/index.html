@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Realtime Translate JP → VN Studio</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -351,11 +353,11 @@
       gap: 0.5rem;
     }
 
-    .copy-btn {
+    .copy-btn, .speak-btn {
       background: none;
       border: none;
       color: var(--text-sub);
-      font-size: 0.85rem;
+      font-size: 0.95rem;
       line-height: 1;
       cursor: pointer;
       padding: 0 0.25rem;
@@ -364,7 +366,7 @@
       transition: opacity 0.15s, color 0.15s;
     }
 
-    .copy-btn:hover {
+    .copy-btn:hover, .speak-btn:hover {
       opacity: 1;
       color: var(--accent-cyan);
     }
@@ -478,6 +480,7 @@
         <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: var(--text-sub); cursor: pointer;">
           <input type="checkbox" id="oneLineMode" style="accent-color: var(--accent-cyan); width: 16px; height: 16px; cursor: pointer;"> Chỉ VI
         </label>
+        <button id="btnPip" class="btn-action" style="padding: 0.5rem; font-size: 0.85rem; display: none;" title="Mở cửa sổ phụ đề nổi (PiP)">PiP</button>
       </div>
     </section>
 
@@ -661,12 +664,43 @@
       viCard.className = 'transcript-card vi';
       viCard.dataset.item = itemCounter;
       viCard.innerHTML = `
-        <div class="card-meta"><span>Độ trễ: ${data.latency_ms || 0}ms</span><span class="meta-right"><span>${now}</span><button class="copy-btn" title="Sao chép">⧉</button></span></div>
+        <div class="card-meta"><span>Độ trễ: ${data.latency_ms || 0}ms</span><span class="meta-right"><span>${now}</span><button class="speak-btn" title="Đọc (TTS)">🔊</button><button class="copy-btn" title="Sao chép">⧉</button></span></div>
         <div class="card-text vi">${escapeHtml(data.vi_text)}</div>
       `;
       if (!data.is_final) viCard.dataset.partialGroup = partialGroup;
       viList.prepend(viCard);
       viList.scrollTop = 0;
+
+      // Update PiP window if open
+      if (pipContainer) {
+        pipContainer.innerText = data.vi_text;
+      }
+
+      if (data.is_final) {
+        saveSession();
+      }
+    }
+
+    function saveSession() {
+      localStorage.setItem('rt_ja', jaList.innerHTML);
+      localStorage.setItem('rt_vi', viList.innerHTML);
+      localStorage.setItem('rt_count', itemCounter);
+    }
+
+    function restoreSession() {
+      const count = localStorage.getItem('rt_count');
+      const jaHTML = localStorage.getItem('rt_ja');
+      const viHTML = localStorage.getItem('rt_vi');
+      if (count && jaHTML && viHTML) {
+        itemCounter = parseInt(count, 10);
+        jaList.innerHTML = jaHTML;
+        viList.innerHTML = viHTML;
+        jaCount.innerText = `${itemCounter} câu`;
+        
+        // clean up any partials left in HTML
+        jaList.querySelectorAll('.transcript-card:not([data-item])').forEach(c => c.remove());
+        viList.querySelectorAll('.transcript-card:not([data-item])').forEach(c => c.remove());
+      }
     }
 
     function escapeHtml(str) {
@@ -706,10 +740,21 @@
 
     [jaList, viList].forEach(listEl => {
       listEl.addEventListener('click', (e) => {
-        const btn = e.target.closest('.copy-btn');
-        if (!btn) return;
-        const text = btn.closest('.transcript-card').querySelector('.card-text').innerText;
-        copyText(text, btn);
+        const btnCopy = e.target.closest('.copy-btn');
+        if (btnCopy) {
+          const text = btnCopy.closest('.transcript-card').querySelector('.card-text').innerText;
+          copyText(text, btnCopy);
+        }
+        
+        const btnSpeak = e.target.closest('.speak-btn');
+        if (btnSpeak) {
+          const text = btnSpeak.closest('.transcript-card').querySelector('.card-text').innerText;
+          if ('speechSynthesis' in window) {
+            const msg = new SpeechSynthesisUtterance(text);
+            msg.lang = 'vi-VN';
+            window.speechSynthesis.speak(msg);
+          }
+        }
       });
     });
 
@@ -911,6 +956,9 @@
       itemCounter = 0;
       jaCount.innerText = '0 câu';
       latencyTag.innerText = '0ms';
+      localStorage.removeItem('rt_ja');
+      localStorage.removeItem('rt_vi');
+      localStorage.removeItem('rt_count');
     });
 
     btnCopyAllJa.addEventListener('click', () => copyAllTexts(jaList, btnCopyAllJa));
@@ -941,7 +989,53 @@
       }
     }
 
+    // UX6: Document Picture-in-Picture
+    let pipWindow = null;
+    let pipContainer = null;
+    const btnPip = document.getElementById('btnPip');
+    
+    if ('documentPictureInPicture' in window) {
+      btnPip.style.display = 'inline-block';
+      btnPip.addEventListener('click', async () => {
+        if (pipWindow) return;
+        try {
+          pipWindow = await documentPictureInPicture.requestWindow({
+            width: 500,
+            height: 120,
+          });
+          
+          pipWindow.document.body.style.margin = '0';
+          pipWindow.document.body.style.padding = '20px';
+          pipWindow.document.body.style.backgroundColor = 'rgba(15, 23, 42, 1)';
+          pipWindow.document.body.style.color = '#f1f5f9';
+          pipWindow.document.body.style.fontFamily = 'sans-serif';
+          pipWindow.document.body.style.display = 'flex';
+          pipWindow.document.body.style.alignItems = 'center';
+          pipWindow.document.body.style.justifyContent = 'center';
+          pipWindow.document.body.style.fontSize = '24px';
+          pipWindow.document.body.style.fontWeight = '500';
+          pipWindow.document.body.style.textAlign = 'center';
+          
+          pipContainer = pipWindow.document.createElement('div');
+          
+          // Set initial text if available
+          const latestVi = viList.querySelector('.transcript-card.vi[data-item] .card-text');
+          pipContainer.innerText = latestVi ? latestVi.innerText : 'Đang chờ phụ đề...';
+          
+          pipWindow.document.body.appendChild(pipContainer);
+          
+          pipWindow.addEventListener('pagehide', () => {
+            pipWindow = null;
+            pipContainer = null;
+          });
+        } catch (e) {
+          console.error('Failed to open PiP window:', e);
+        }
+      });
+    }
+
     // Start WebSocket
+    restoreSession();
     connectWS();
     refreshEngineBadge();
     initAudioDevices();

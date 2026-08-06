@@ -38,11 +38,11 @@ UI4 không có nút riêng: mỗi card mới `prepend` ngay dưới system card 
 - [x] UI3: badge đỏ khi ASR fallback/mock **hoặc** MT `FallbackDict`
 - [x] Giữ patch MT `sentencepiece` / sticky `load_failed` nếu còn uncommitted — không revert
 - [x] Restore / sync `plan/plan-2026-08-06-ui-visual.md`; tick mốc; wiki ngắn
-- [ ] Commit + push `ui-visual/dev`; merge `antigravity/dev`; xóa task branch. Không `master`
+- [x] Commit + push / merge vào `antigravity/dev`; task `ui-visual/dev` đã xóa — disk `antigravity/dev` @ `d9e9b9f` (+ `885c2bc`). Không `master`
 
 ## Mốc
 
-- [x] Restore D-UI đóng — ngày: 2026-08-06 · verified Cursor: pending
+- [x] Restore D-UI đóng — ngày: 2026-08-06 · verified Cursor: 2026-08-06 (disk: UI1–4 + is_final trên `antigravity/dev` @ `d9e9b9f`)
 
 ## Cắt / không làm
 

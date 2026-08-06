@@ -1,5 +1,12 @@
 # Wiki Log
 
+## [2026-08-06] verify+ingest | D-UI restore done · D-UX Sprint 2 plan refresh
+
+- Disk `antigravity/dev` @ `d9e9b9f`: UI1 fontSizeVi, UI2 oneLineMode, UI4 prepend, `endpoints.py` is_final=True — restore D-UI **Y**.
+- UX Sprint 2 **N**: chưa PiP / localStorage / TTS / manifest.
+- Living `plan/plan-2026-08-06-ux-interaction.md` — Sprint 2 checklist + appendix prompt Gemini paste-ready; branch `ux-pip/dev` → `antigravity/dev`.
+- Tick restore/ui-visual mốc khớp disk.
+
 ## [2026-08-06] ingest | Restore D-UI plan + Gemini 3.1 Pro High prompt
 
 - `plan/plan-2026-08-06-restore-d-ui.md` — cherry-pick `c0bb784`, UI4 prepend bắt buộc, `is_final=True` trên silence emit, UI3 MT FallbackDict; appendix prompt Gemini.

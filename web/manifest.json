@@ -1,0 +1,15 @@
+{
+  "name": "Realtime Translate JP → VN",
+  "short_name": "JP→VN",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0a0c10",
+  "theme_color": "#7f53ac",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

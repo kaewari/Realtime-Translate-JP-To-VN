@@ -1,7 +1,7 @@
 # Topic: Realtime Translate JP To VN
 
 ## Status
-MVP Ready · A+B+C closed · utterance-end verified · D-UX Sprint 1 verified · **restore D-UI open** ([restore](../plan/plan-2026-08-06-restore-d-ui.md) · [ui-visual](../plan/plan-2026-08-06-ui-visual.md)) — Gemini 3.1 Pro High. Sprint 2 open. mlx ~65.7ms.
+MVP Ready · A+B+C closed · utterance-end verified · D-UI restored (`d9e9b9f`) · D-UX Sprint 1 verified · **D-UX Sprint 2 open** ([ux-interaction](../plan/plan-2026-08-06-ux-interaction.md) Appendix Sprint 2). mlx ~65.7ms.
 
 ## Verified on real hardware (2026-08-06)
 - 7/7 unit tests pass (`python3 -m unittest discover -s tests`)
@@ -49,8 +49,8 @@ MVP Ready · A+B+C closed · utterance-end verified · D-UX Sprint 1 verified ·
 - **Utterance jump / mid-sentence ASR**: **verified closed 2026-08-06** — `pop_utterance` silence endpointing (0.6s/8.0s/0.4s) thay greedy `get_window` [utterance-endpointing](../plan/plan-2026-08-06-utterance-endpointing.md); Cursor disk + 11/11 tests.
 - Copy text: **đã đóng** bởi B1 (per card + copy all).
 - **D-UX Sprint 1**: **verified closed** — mic / export / edit JA / Space / offline ([ux-interaction](../plan/plan-2026-08-06-ux-interaction.md)).
-- **D-UX Sprint 2** open: PiP, localStorage, TTS VI, manifest (UX6–9).
-- **D-UI**: **restore open** — `c0bb784` lệch nhánh; HEAD thiếu UI1–3 + đang `appendChild` ([restore](../plan/plan-2026-08-06-restore-d-ui.md)).
+- **D-UX Sprint 2** open: PiP, localStorage, TTS VI, manifest (UX6–9) — prompt Gemini trong [ux-interaction](../plan/plan-2026-08-06-ux-interaction.md) Appendix Sprint 2; branch `ux-pip/dev`.
+- **D-UI**: **restored** trên `antigravity/dev` @ `d9e9b9f` (UI1–4 + is_final) — [restore](../plan/plan-2026-08-06-restore-d-ui.md) · [ui-visual](../plan/plan-2026-08-06-ui-visual.md).
 
 ## System Overview
 Hệ thống dịch tiếng Nhật sang tiếng Việt thời gian thực (near real-time), hoạt động hoàn toàn cục bộ (local-first) trên Apple Silicon Mac M5 Pro.
