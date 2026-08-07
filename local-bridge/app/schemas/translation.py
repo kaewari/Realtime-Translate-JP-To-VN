@@ -15,6 +15,7 @@ class TranslationResponse(BaseModel):
     is_final: bool = True
     confidence: Optional[float] = None
     latency_ms: float = 0.0
+    utterance_id: Optional[int] = None  # groups partials + (corrected) finals of one utterance
     timestamp: float = Field(default_factory=time.time)
 
 class ServerStatusResponse(BaseModel):

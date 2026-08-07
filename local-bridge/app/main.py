@@ -1,5 +1,7 @@
 """FastAPI + WebSocket entrypoint for local-bridge."""
+import asyncio
 import os
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -7,12 +9,27 @@ from fastapi.responses import FileResponse
 
 from app.core.config import config
 from app.api.endpoints import router
+from app.services.asr_service import asr_service
+from app.services.translation_service import translation_service
 from app.utils.logger import log_warning
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Preload ASR + MT models in background so the first utterance after a
+    # restart doesn't stall on cold load (~1.7s). Server stays available meanwhile.
+    async def warm():
+        await asyncio.to_thread(asr_service.load_model)
+        await asyncio.to_thread(translation_service.load_model)
+    asyncio.create_task(warm())
+    yield
+
 
 app = FastAPI(
     title="Realtime Translate JP To VN - Local Bridge",
     description="Bridge server for Japanese to Vietnamese real-time speech recognition & translation",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan,
 )
 
 # Enable CORS for local web interface & extensions

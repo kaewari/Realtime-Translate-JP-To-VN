@@ -1,5 +1,15 @@
 # Wiki Log
 
+## [2026-08-08] ingest | Streaming translate shipped — vừa dịch vừa nghe, tự sửa (`streaming/dev`)
+
+- Raw: `plan/latency-under-30ms-2026-08-08.md` — <30ms bị bỏ (re-decode window dài 5-7s không thể <30ms với accuracy giữ nguyên); user redirect sang streaming như web dịch hiện đại.
+- `endpoints.py`: decode nền `_decode_worker` (skip-if-busy, loop không block), final = await in-flight + re-decode exact window, corrected final khi speech resume, re-decode khi client `is_final`.
+- `config.py`: `endpoint_silence_sec` 0.064→0.2s (hết final sớm giữa câu); `asr_model_name` giữ whisper-small (tiny 15-42ms nhưng 10% accuracy TTS — loại).
+- `main.py`: preload ASR+MT background khi startup (hết 1.7s cold stall).
+- Benchmark thật: `benchmark_latency_e2e.py` fix pacing (bug 1024 byte ≠ sample → đo 2x), mới `benchmark_sentences.py` (10 câu ~15 từ TTS Kyoko).
+- Số liệu: final p50 324ms / p95 408ms; accuracy 7/10 exact (70%), 9/10 đúng nghĩa; 0 truncation (trước 3/10); tiny bị loại.
+- Branch `streaming/dev`, chưa merge master.
+
 ## [2026-08-07] ingest | Codebase review — all plans 100% on disk
 
 - Raw: `review/codebase-review-2026-08-07.md` — disk verify A/B/C, utterance-end, D-UI, D-UX S1+S2; không gap trong scope plan.
@@ -156,3 +166,8 @@
 
 - UX1 (mic selector), UX2 (export), UX3 (dblclick edit JA -> dịch lại), UX4 (phím space toggle mic), UX5 (offline status/reconnect UI) implemented in `web/index.html`.
 - Plan ticked.
+## [2026-08-07] ingest | Latency review — realtime gap: partials missing, serial WS loop, duplicate final
+
+- Raw: `review/review-latency-realtime-2026-08-07.md` — P0: no partial (response only after 0.6s silence / 8s cap), serial receive→ASR→MT blocks audio intake, fake latency_ms; P1: duplicate/stale final via `last_result`, VAD chunk-tail trims speech, silence flush → ASR hallucination, model lazy-load race, mic enabled before engine ready, audio loss on stop/reconnect; P2: chunk 4096, np.concatenate O(n²), MT mps bug, ScriptProcessor main-thread, mic stream leak, localStorage full-serialize.
+- Evidence gap: benchmark 63ms = warm ASR on noise only; WS test = text-only; need stage timing + p95 + /health probe.
+- `open-code-review` integration tried then removed (no LLM endpoint; user chose removal) — plugin file + npm global uninstalled, worktree clean.

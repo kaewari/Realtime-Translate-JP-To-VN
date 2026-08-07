@@ -53,8 +53,12 @@ plan/ review/       # plan/review file (bất biến, wiki là tổng hợp số
 1. `cd local-bridge && python3.10 -m venv .venv && source .venv/bin/activate`
 2. `pip install -r requirements.txt` — ⚠️ bắt buộc `scipy==1.14.1` (đã pin): wheel scipy≥1.15 fail dyld trên macOS 27 với Python 3.10 → ASR âm thầm fallback mock; và `sentencepiece` (MarianTokenizer) — thiếu → MT FallbackDict, UI hiện `[Dịch: …]`
 3. `uvicorn app.main:app --port 8765`
-4. Mở <http://localhost:8765/> — lần dùng đầu models (whisper-small, opus-mt-ja-vi) tự download vào HF cache `~/.cache/huggingface/hub/`, gọi đầu ~10-30s (lazy-load), các gọi sau nhanh hơn
+4. Mở <http://localhost:8765/> — models (whisper-small, opus-mt-ja-vi) tự download vào HF cache `~/.cache/huggingface/hub/` và **preload background ngay khi server start** (gọi đầu không còn stall ~1.7s)
 5. (Tùy chọn) `curl localhost:8765/api/status` — xem engine ASR/MT đã load chưa
+
+## Streaming translate
+
+Dịch **liên tục khi đang nói** như web dịch hiện đại: partial xuất hiện ~0.4s sau khi bắt đầu và tự sửa khi có thêm audio (ASR/MT chạy background, loop WS không block); final re-decode window cuối nên không bao giờ cắt cụt đuôi câu. Số đo thật (10 câu dài, whisper-small): final p50 ~324ms, accuracy 7/10 exact — chi tiết trong [walkthrough](walkthrough.md).
 
 ## Lộ trình
 

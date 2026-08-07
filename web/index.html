@@ -650,16 +650,43 @@
 
     function addTranslationResult(data) {
       const now = new Date().toLocaleTimeString();
-
-      // Final marker: remove ALL partial cards of this utterance group, then append one final card
-      if (data.is_final) {
-        jaList.querySelectorAll(`[data-partial-group="${partialGroup}"]`).forEach(c => c.remove());
-        viList.querySelectorAll(`[data-partial-group="${partialGroup}"]`).forEach(c => c.remove());
-        itemCounter++;
-        jaCount.innerText = `${itemCounter} câu`;
-      }
+      const uid = data.utterance_id != null ? data.utterance_id : null;
       if (data.latency_ms) {
         latencyTag.innerText = `${data.latency_ms}ms`;
+      }
+
+      if (data.is_final) {
+        // Final marker: remove ALL partial cards of this utterance group
+        jaList.querySelectorAll(`[data-partial-group="${partialGroup}"]`).forEach(c => c.remove());
+        viList.querySelectorAll(`[data-partial-group="${partialGroup}"]`).forEach(c => c.remove());
+
+        if (uid !== null) {
+          // Corrected final for the same utterance -> update the existing card in place
+          const jaCard = jaList.querySelector(`[data-utterance="${uid}"]`);
+          const viCard = viList.querySelector(`[data-utterance="${uid}"]`);
+          if (jaCard && viCard) {
+            jaCard.querySelector('.card-text').innerText = data.ja_text;
+            viCard.querySelector('.card-text').innerText = data.vi_text;
+            jaCard.querySelector('.meta-right span').innerText = now;
+            viCard.querySelector('.card-meta').innerHTML =
+              `<span>Độ trễ: ${data.latency_ms || 0}ms</span><span class="meta-right"><span>${now}</span><button class="speak-btn" title="Đọc (TTS)">🔊</button><button class="copy-btn" title="Sao chép">⧉</button></span>`;
+            if (pipContainer) pipContainer.innerText = data.vi_text;
+            saveSession();
+            return;
+          }
+        }
+        itemCounter++;
+        jaCount.innerText = `${itemCounter} câu`;
+      } else {
+        // Partial: update the single live partial card of this group instead of appending
+        const liveJa = jaList.querySelector(`[data-partial-group="${partialGroup}"]`);
+        const liveVi = viList.querySelector(`[data-partial-group="${partialGroup}"]`);
+        if (liveJa && liveVi) {
+          liveJa.querySelector('.card-text').innerText = data.ja_text;
+          liveVi.querySelector('.card-text').innerText = data.vi_text;
+          if (pipContainer) pipContainer.innerText = data.vi_text;
+          return;
+        }
       }
 
       // JA Card
@@ -671,6 +698,7 @@
         <div class="card-text ja" title="Nhấp đúp để sửa JA">${escapeHtml(data.ja_text)}</div>
       `;
       if (!data.is_final) jaCard.dataset.partialGroup = partialGroup;
+      else if (uid !== null) jaCard.dataset.utterance = uid;
       jaList.prepend(jaCard);
       jaList.scrollTop = 0;
 
@@ -683,6 +711,7 @@
         <div class="card-text vi">${escapeHtml(data.vi_text)}</div>
       `;
       if (!data.is_final) viCard.dataset.partialGroup = partialGroup;
+      else if (uid !== null) viCard.dataset.utterance = uid;
       viList.prepend(viCard);
       viList.scrollTop = 0;
 
@@ -837,7 +866,7 @@
         audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
         const source = audioContext.createMediaStreamSource(mediaStream);
         
-        scriptProcessor = audioContext.createScriptProcessor(4096, 1, 1);
+        scriptProcessor = audioContext.createScriptProcessor(1024, 1, 1);
         
         scriptProcessor.onaudioprocess = (e) => {
           if (!isRecording) return;

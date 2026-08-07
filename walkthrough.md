@@ -81,6 +81,14 @@ Toàn bộ 7 bài test đã chạy thành công trong 5.038s (`python3 -m unitte
 - **UX8 (TTS):** Nút 🔊 trên card VI → Web Speech `vi-VN` (cancel utterance trước khi đọc mới).
 - **UX9 (PWA lite):** `web/manifest.json` + `icon.svg` — cài như app standalone; **không** Service Worker / offline ASR.
 
+## Streaming translate (2026-08-08) — vừa dịch vừa nghe, tự sửa
+
+- **Dịch liên tục khi đang nói**: ASR/MT chạy trong background task (`_decode_worker`), loop WebSocket không bao giờ block — bản dịch partial xuất hiện ~0.4-0.5s sau khi bắt đầu nói và **tự sửa liên tục** khi có thêm audio, giống Google Translate/Youtube live caption.
+- **Final chính xác**: khi hết nói, server chờ decode đang chạy rồi **re-decode lại window cuối** — không còn câu bị cắt cụt đuôi (trước: `働き` thay vì `働きたいです。`). Latency final p50 **~324ms** trên câu dài 5-7s.
+- **Kết thúc câu đáng tin**: endpoint silence 0.2s (thay 0.064s) — không bắn final sớm giữa câu khi người nói ngắt ngắn.
+- **Khởi động nhanh**: ASR+MT preload ngay khi server start — utterance đầu tiên không bị stall 1.7s load model.
+- Độ chính xác đo thật (10 câu ~15 từ, TTS Kyoko, whisper-small): **7/10 exact match (70%)**, 9/10 đúng nghĩa; tiny bị loại vì accuracy 10% trên TTS.
+
 ## Hướng dẫn chạy thử
 
 1. Cài dependencies (⚠️ `scipy==1.14.1` + `sentencepiece` bắt buộc — thiếu sentencepiece → MarianMT fail âm thầm, VI hiện `[Dịch: …]`; scipy≥1.15 fail dyld trên macOS 27 + Python 3.10 → ASR fallback mock):

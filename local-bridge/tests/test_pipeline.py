@@ -105,6 +105,41 @@ class TestLocalBridgePipeline(unittest.TestCase):
         self.assertEqual(len(window), 8 * 16000)
         self.assertIsNone(self.buffer_mgr.pop_utterance())
 
+    def test_streaming_optimistic_final(self):
+        """Streaming: first silence chunk after speech triggers the optimistic final."""
+        self._feed(1.0, amplitude=0.5)
+        self.assertFalse(self.buffer_mgr.should_emit_final())
+        self._feed(0.064, chunk_sec=0.064)  # one 64ms silence chunk
+        self.assertTrue(self.buffer_mgr.should_emit_final())
+
+    def test_streaming_resume_within_grace_same_utterance(self):
+        """Speech after a short pause (< resume_grace_sec) stays the same utterance."""
+        self._feed(1.0, amplitude=0.5)
+        self._feed(0.1)  # short pause, below grace
+        gen = self.buffer_mgr.utterance_generation
+        self._feed(0.5, amplitude=0.5)
+        self.assertEqual(self.buffer_mgr.utterance_generation, gen)
+        self.assertGreater(len(self.buffer_mgr.partial_window()), 1.5 * 16000)
+
+    def test_streaming_new_utterance_after_grace(self):
+        """Speech after a confirmed pause (>= resume_grace_sec) resets the window."""
+        self._feed(1.0, amplitude=0.5)
+        self._feed(0.7)  # confirmed pause
+        gen = self.buffer_mgr.utterance_generation
+        was_speech = self._feed_one(0.5, amplitude=0.5)
+        self.assertTrue(was_speech)
+        self.assertEqual(self.buffer_mgr.utterance_generation, gen + 1)
+        self.assertLess(len(self.buffer_mgr.partial_window()), 0.6 * 16000)
+
+    def _feed_one(self, seconds, amplitude=0.0, chunk_sec=0.1):
+        """Feed one chunk; returns the add_float32 speech classification."""
+        n = int(chunk_sec * 16000)
+        if amplitude:
+            chunk = (np.sin(2 * np.pi * 440 * np.arange(n) / 16000) * amplitude).astype(np.float32)
+        else:
+            chunk = np.zeros(n, dtype=np.float32)
+        return self.buffer_mgr.add_float32(chunk)
+
     def test_asr_service_mock(self):
         """Unit: ASR returns model text with mocked pipe — no model load, fast."""
         class FakePipe:

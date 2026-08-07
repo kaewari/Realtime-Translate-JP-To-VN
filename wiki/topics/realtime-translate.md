@@ -1,7 +1,18 @@
 # Topic: Realtime Translate JP To VN
 
 ## Status
-MVP Ready · **All living plans verified closed** ([review 2026-08-07](../review/codebase-review-2026-08-07.md)) · A+B+C · utterance-end · D-UI · D-UX S1+S2 · master `de61b62`+. mlx ~65.7ms.
+MVP Ready · **All living plans verified closed** ([review 2026-08-07](../review/codebase-review-2026-08-07.md)) · A+B+C · utterance-end · D-UI · D-UX S1+S2 · master `de61b62`+. mlx ~65.7ms. **Streaming translate shipped 2026-08-08** (`streaming/dev`, chưa merge master).
+
+## Streaming translate (2026-08-08) — vừa dịch vừa nghe, tự sửa
+- **Background decode** (`endpoints.py` `_decode_worker`): partial decode chạy task nền (skip-if-busy, 1 task/utterance) — receive loop không bao giờ block; partial xuất hiện khi đang nói, tự sửa liên tục.
+- **Final = re-decode exact window** (sau khi await in-flight decode) — hết truncation đuôi câu (`働き` → full câu). Latency final p50 **324ms** / p95 408ms trên 10 câu dài (~15 từ, TTS Kyoko).
+- **Accuracy 7/10 exact (70%)**, 9/10 đúng nghĩa; s5 `遅刻思想` là lỗi whisper thật (offline decode cũng sai), s7/s8 chỉ khác chữ số/kanji.
+- **Tiny bị loại**: decode 15-42ms nhưng accuracy 10% trên TTS — đánh đổi không xứng; giữ whisper-small.
+- **endpoint_silence_sec 0.064 → 0.2s**: hết final bắn sớm giữa câu do pause ngắn.
+- **Preload model khi startup** (`main.py` lifespan): hết stall 1.7s cold start ở utterance đầu.
+- **Benchmark thật**: `benchmark_latency_e2e.py` (fix pacing 2048B=64ms — bug cũ: 1024 byte ≠ 1024 sample làm đo 2x), `benchmark_sentences.py` (10 câu TTS + so text).
+- Đo đúng nghĩa: ~55ms chỉ đạt khi final reuse partial (rủi ro truncation) — <30ms không khả thi khi re-decode window 5-7s (small 140-850ms).
+- Raw: [plan latency-under-30ms 08-08](../plan/latency-under-30ms-2026-08-08.md) (status REPLACED → streaming).
 
 ## Verified on real hardware (2026-08-06)
 - 7/7 unit tests pass (`python3 -m unittest discover -s tests`)
@@ -44,8 +55,13 @@ MVP Ready · **All living plans verified closed** ([review 2026-08-07](../review
 - **B6**: bỏ `allow_credentials=True` (combo với `*` vô hiệu) trong `main.py`.
 - Tests: **8/8 pass (1.4s)** + smoke /health + /api/status + served UI có nút copy.
 
+## Latency review 2026-08-07 (`review/review-latency-realtime-2026-08-07.md`) — mở lại "realtime"
+- **P0**: không có partial — kết quả chỉ emit sau 0.6s silence / 8s cap, mọi response `is_final=true`; vòng WS tuần tự (receive→ASR→MT→send) chặn nhận audio → backlog; `latency_ms` giả (timer sau receive, flush resend latency cũ).
+- **P1**: duplicate/stale final qua `last_result` (endpoints.py:61,125,127-138); VAD chunk-tail nuốt đầu câu (audio_buffer.py:46-56,73); flush silence-only vào Whisper → hallucination (audio_buffer.py:65-68) + fallback fake text `confidence=None`; model lazy-load race; mic bật khi engine chưa ready; mất audio khi stop/reconnect.
+- **Evidence gap**: benchmark ~63ms = warm ASR noise-only; WS test chỉ text; cần stage timing + p95 + /health probe.
+
 ## Open gaps
-- Không còn gap trong scope các living plan (review disk 2026-08-07: 100%).
+- Không còn gap trong scope các living plan (review disk 2026-08-07: 100%). **Latency realtime mở lại 2026-08-07** — xem review latency (partials, queue, duplicate final).
 - **Latency ASR**: Phase C **closed** — ~65.7ms/window (mlx).
 - **Utterance jump**: **closed** — `pop_utterance` silence endpointing.
 - **D-UI / D-UX S1+S2**: **closed**.
