@@ -15,6 +15,7 @@ class TranslationResponse(BaseModel):
     is_final: bool = True
     confidence: Optional[float] = None
     latency_ms: float = 0.0
+    asr_latency_ms: Optional[float] = None
     timestamp: float = Field(default_factory=time.time)
 
 class ServerStatusResponse(BaseModel):

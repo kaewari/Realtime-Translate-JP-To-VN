@@ -1,7 +1,7 @@
 # Topic: Realtime Translate JP To VN
 
 ## Status
-MVP Ready · **All living plans verified closed** ([review 2026-08-07](../review/codebase-review-2026-08-07.md)) · A+B+C · utterance-end · D-UI · D-UX S1+S2 · master `de61b62`+. mlx ~65.7ms.
+MVP Ready · **All living plans verified closed** ([review 2026-08-07](../review/codebase-review-2026-08-07.md)) · A+B+C · utterance-end · D-UI · D-UX S1+S2 · Optimize/Fix 2026-08-11 done · master `de61b62`+. mlx ~65.7ms.
 
 ## Verified on real hardware (2026-08-06)
 - 7/7 unit tests pass (`python3 -m unittest discover -s tests`)

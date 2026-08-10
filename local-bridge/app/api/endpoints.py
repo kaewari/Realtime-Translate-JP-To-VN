@@ -81,15 +81,17 @@ async def websocket_translate(websocket: WebSocket):
             if event_type == "text" and "text" in msg_dict:
                 ja_text = msg_dict["text"].strip()
                 if ja_text:
+                    mt_start = time.time()
                     vi_text = await asyncio.to_thread(translation_service.translate, ja_text)
-                    latency = (time.time() - start_t) * 1000.0
+                    latency = (time.time() - mt_start) * 1000.0
                     resp = TranslationResponse(
                         id=str(uuid.uuid4())[:8],
                         ja_text=ja_text,
                         vi_text=vi_text,
                         is_final=True,
                         confidence=None,
-                        latency_ms=round(latency, 2)
+                        latency_ms=round(latency, 2),
+                        asr_latency_ms=None
                     )
                     await websocket.send_json(resp.model_dump())
                 continue
@@ -108,32 +110,38 @@ async def websocket_translate(websocket: WebSocket):
 
                 if audio_window is not None and len(audio_window) > 0:
                     # Run ASR (off the event loop: model inference blocks)
+                    asr_start = time.time()
                     asr_res = await asyncio.to_thread(asr_service.transcribe, audio_window, config.sample_rate)
+                    asr_latency = (time.time() - asr_start) * 1000.0
                     ja_text = asr_res.get("text", "").strip()
 
                     if ja_text:
+                        mt_start = time.time()
                         vi_text = await asyncio.to_thread(translation_service.translate, ja_text)
-                        latency = (time.time() - start_t) * 1000.0
+                        mt_latency = (time.time() - mt_start) * 1000.0
+                        total_latency = asr_latency + mt_latency
                         resp = TranslationResponse(
                             id=str(uuid.uuid4())[:8],
                             ja_text=ja_text,
                             vi_text=vi_text,
                             is_final=True,
                             confidence=asr_res.get("confidence"),
-                            latency_ms=round(latency, 2)
+                            latency_ms=round(total_latency, 2),
+                            asr_latency_ms=round(asr_latency, 2)
                         )
-                        last_result = (ja_text, vi_text, asr_res.get("confidence"), round(latency, 2))
+                        last_result = (ja_text, vi_text, asr_res.get("confidence"), round(total_latency, 2), round(asr_latency, 2))
                         await websocket.send_json(resp.model_dump())
                 elif is_final_msg and last_result is not None:
                     # Flush had no new audio: deliver last partial as final so clients always get a final marker
-                    ja_text, vi_text, confidence, latency = last_result
+                    ja_text, vi_text, confidence, latency, asr_latency = last_result
                     resp = TranslationResponse(
                         id=str(uuid.uuid4())[:8],
                         ja_text=ja_text,
                         vi_text=vi_text,
                         is_final=True,
                         confidence=confidence,
-                        latency_ms=latency
+                        latency_ms=latency,
+                        asr_latency_ms=asr_latency
                     )
                     await websocket.send_json(resp.model_dump())
 

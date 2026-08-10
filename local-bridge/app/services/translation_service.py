@@ -1,5 +1,6 @@
 """Translation Service for Japanese to Vietnamese."""
 import time
+import functools
 from typing import Optional, Dict
 from app.core.config import config
 from app.utils.logger import log_error, log_warning
@@ -59,18 +60,9 @@ class TranslationService:
             self.load_failed = True
             return False
 
-    def translate(self, text: str) -> str:
-        """Translate Japanese text to Vietnamese."""
-        text = text.strip()
-        if not text:
-            return ""
-
-        # Check fallback dictionary for exact match (strip trailing JA punctuation first)
-        key = text.rstrip("。、！？").strip()
-        if key in self.dict_ja_vi:
-            return self.dict_ja_vi[key]
-
-        # Try Hugging Face MarianMT if available or loadable
+    @functools.lru_cache(maxsize=512)
+    def _translate_cached(self, text: str) -> str:
+        """Cached translation for MarianMT inference (fallback dict path not cached)."""
         if not self.is_loaded:
             self.load_model()
 
@@ -84,13 +76,30 @@ class TranslationService:
                 return result.strip()
             except Exception as e:
                 log_error(f"MarianMT translate error for '{text}': {e}")
+        return None
+
+    def translate(self, text: str) -> str:
+        """Translate Japanese text to Vietnamese."""
+        text = text.strip()
+        if not text:
+            return ""
+
+        # Check fallback dictionary for exact match (strip trailing JA punctuation first)
+        key = text.rstrip("。、！？").strip()
+        if key in self.dict_ja_vi:
+            return self.dict_ja_vi[key]
+
+        # Try cached MarianMT inference
+        cached_result = self._translate_cached(text)
+        if cached_result is not None:
+            return cached_result
 
         # Heuristic fallback matching for demo / dev when offline
         translated_parts = []
         words = text.split()
         for w in words:
             translated_parts.append(self.dict_ja_vi.get(w, w))
-            
+
         res = " ".join(translated_parts)
         if res == text:
             # Add prefix indicator if phrase wasn't in dictionary and model not loaded yet

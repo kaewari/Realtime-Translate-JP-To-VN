@@ -551,6 +551,8 @@
     let scriptProcessor = null;
     let itemCounter = 0;
     let partialGroup = 0;
+    let reconnectAttempts = 0;
+    const MAX_RECONNECT = 10;
 
     const btnMic = document.getElementById('btnMic');
     const micText = document.getElementById('micText');
@@ -616,6 +618,7 @@
           btnMic.style.opacity = '1';
           engineBadge.closest('.status-badge').classList.remove('warning-badge');
           refreshEngineBadge();
+          reconnectAttempts = 0;  // Reset reconnect counter on successful connection
         };
 
         ws.onmessage = (event) => {
@@ -637,7 +640,9 @@
           btnMic.style.opacity = '0.5';
           engineBadge.closest('.status-badge').classList.add('warning-badge');
           engineBadge.innerText = 'WS OFFLINE';
-          setTimeout(connectWS, 3000);
+          const delay = Math.min(1000 * Math.pow(2, reconnectAttempts) + Math.floor(Math.random() * 1000), 30000);
+        reconnectAttempts = Math.min(reconnectAttempts + 1, MAX_RECONNECT);
+        setTimeout(connectWS, delay);
         };
 
         ws.onerror = (err) => {
@@ -708,13 +713,25 @@
       const viHTML = localStorage.getItem('rt_vi');
       if (count && jaHTML && viHTML) {
         itemCounter = parseInt(count, 10);
-        jaList.innerHTML = jaHTML;
-        viList.innerHTML = viHTML;
+
+        const sanitizeAndAppend = (htmlStr, targetList) => {
+          const doc = new DOMParser().parseFromString(htmlStr, 'text/html');
+          const cards = doc.body.querySelectorAll('.transcript-card[data-item]');
+          targetList.innerHTML = '';
+          cards.forEach(card => {
+            // Strip any executable script or unsafe attributes before appending
+            card.querySelectorAll('script, iframe, object, embed').forEach(s => s.remove());
+            const textEl = card.querySelector('.card-text');
+            if (textEl) {
+              textEl.innerText = textEl.innerText; // Force plain text sanitize
+            }
+            targetList.appendChild(card);
+          });
+        };
+
+        sanitizeAndAppend(jaHTML, jaList);
+        sanitizeAndAppend(viHTML, viList);
         jaCount.innerText = `${itemCounter} câu`;
-        
-        // clean up any partials left in HTML
-        jaList.querySelectorAll('.transcript-card:not([data-item])').forEach(c => c.remove());
-        viList.querySelectorAll('.transcript-card:not([data-item])').forEach(c => c.remove());
       }
     }
 
@@ -834,7 +851,11 @@
         const constraints = { audio: { sampleRate: 16000, channelCount: 1 } };
         if (micSelect.value) constraints.audio.deviceId = { exact: micSelect.value };
         mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-        audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+        if (!audioContext) {
+          audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+        } else {
+          await audioContext.resume();
+        }
         const source = audioContext.createMediaStreamSource(mediaStream);
         
         scriptProcessor = audioContext.createScriptProcessor(4096, 1, 1);
@@ -907,7 +928,7 @@
 
       if (scriptProcessor) scriptProcessor.disconnect();
       if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
-      if (audioContext) audioContext.close();
+      if (audioContext) audioContext.suspend(); // suspend, don't close — reuse across sessions
 
       btnMic.className = 'btn-mic';
       micText.innerText = 'Bắt đầu thu âm';

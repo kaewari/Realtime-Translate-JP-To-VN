@@ -9,6 +9,14 @@ _WHISPER_JUNK = frozenset({
     "ご視聴ありがとうございました",
     "ご視聴ありがとう",
     "thanksforwatching",
+    "チャンネル登録",
+    "高評価",
+    "共有",
+    "コメント",
+    "登録",
+    "いいね",
+    "通知",
+    "概要欄",
 })
 
 
@@ -70,7 +78,10 @@ class ASRService:
                     audio_data,
                     path_or_hf_repo=self.model_path,
                     language=config.asr_language,
-                    task="transcribe"
+                    task="transcribe",
+                    temperature=0.0,
+                    no_speech_threshold=0.6,
+                    condition_on_previous_text=False
                 )
                 text = _filter_whisper_junk(res.get("text", ""))
                 return {"text": text, "confidence": None}

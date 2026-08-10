@@ -1,5 +1,12 @@
 # Wiki Log
 
+## [2026-08-11] implement | Optimize + fix sprint — Phase A/B/C
+
+- **Phase A (WS/UI)**: `web/index.html` — WS reconnect exponential backoff (`reconnectAttempts`, max 10, cap 30s + jitter); AudioContext suspend/resume reuse (không recreate, không close) — giảm init latency + leak trên Safari/iOS.
+- **Phase B (latency/sanitize/cache)**: `endpoints.py` — tách `asr_latency_ms` (real ASR+MT time) khỏi `latency_ms`; `schemas/translation.py` thêm `asr_latency_ms` field; `web/index.html restoreSession` — DOMPurify lightweight (DOMParser + script/iframe strip + innerText force) chống XSS localStorage; `asr_service.py` — `temperature=0.0, no_speech_threshold=0.6, condition_on_previous_text=False` giảm hallucination; `translation_service.py` — `@lru_cache(maxsize=512)` cho `_translate_cached`.
+- **Phase C (junk filter)**: mở rộng `_WHISPER_JUNK` với `チャンネル登録・高評価・共有・コメント・登録・いいね・通知・概要欄`.
+- Tests: 12/12 pass (1.4s). Benchmark: 823ms/912ms outlier do random noise, avg ~110ms (stable sau warmup).
+
 ## [2026-08-07] ingest | Codebase review — all plans 100% on disk
 
 - Raw: `review/codebase-review-2026-08-07.md` — disk verify A/B/C, utterance-end, D-UI, D-UX S1+S2; không gap trong scope plan.
